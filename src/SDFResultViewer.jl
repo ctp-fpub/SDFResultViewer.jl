@@ -1,7 +1,7 @@
 module SDFResultViewer
 
 export compute_L, compute_Lx, mean_Lx, Lx_sclice, subsample,
-    read_positions, get_times
+    read_positions, read_E, get_times
 
 using SDFReader
 using RecursiveArrayTools
@@ -15,15 +15,13 @@ using FileTrees
 using Transducers, ThreadsX
 
 function compute_L(file)
-    blocks = file_summary(file)
-
     keys = ["weight/electron",
             "grid/electron",
             "px/electron",
             "py/electron",
             "pz/electron"]
 
-    w, (x,y,z), px, py, pz = readkeys(file, blocks, keys)
+    w, (x,y,z), px, py, pz = readkeys(file, keys)
 
     r = [SVector{3}(x[i],y[i],z[i]) for i in eachindex(x)]
     p = [SVector{3}(px[i],py[i],pz[i]) for i in eachindex(px)]
@@ -32,14 +30,12 @@ function compute_L(file)
 end
 
 function compute_Lx(file)
-    blocks = file_summary(file)
-
     keys = ["weight/electron",
             "grid/electron",
             "py/electron",
             "pz/electron"]
 
-    w, (x,y,z), py, pz = readkeys(file, blocks, keys)
+    w, (x,y,z), py, pz = readkeys(file, keys)
 
     Lx = @. w * (y * pz - z * py)
 end
@@ -51,6 +47,17 @@ function compute_Lx(file, λ)
     Lx = uconvert.(NoUnits, compute_Lx(file) / unit_L)
 end
 
+function read_E(file)
+    k = ["ex", "ey", "ez"]
+    blocks = file_summary(file)
+
+    grid, Ex, Ey, Ez = readkeys(file, k)
+
+    E = SVector{3}.(Ex, Ey, Ez)
+
+    return grid, E
+end
+
 function subsample(v, target_size)
     length(v) > target_size ? imresize(v, target_size) : v
 end
@@ -58,10 +65,9 @@ end
 function read_positions(file, λ)
     ω = 2π*c_0/λ
     unit_length = c_0 / ω
-    blocks = file_summary(file)
     keys = ["grid/electron"]
 
-    ((x,y,z),) = readkeys(file, blocks, keys)
+    ((x,y,z),) = readkeys(file, keys)
 
     return uconvert.(NoUnits, x / unit_length),
            uconvert.(NoUnits, y / unit_length),
