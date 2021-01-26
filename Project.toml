@@ -22,6 +22,7 @@ Transducers = "28d57a85-8fef-5791-bfe6-a80928e7c999"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
+ArrayInterface = "2.14"
 FileTrees = "0.1"
 ImageTransformations = "0.8"
 IntervalSets = "0.5"
