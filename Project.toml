@@ -29,7 +29,7 @@ WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 [compat]
 ArrayInterface = "2.14, 3.0"
 EPOCHInput = "0.1"
-FileTrees = "0.1"
+FileTrees = "0.1, 0.2"
 ImageTransformations = "0.8"
 IntervalSets = "0.5"
 JSServe = "1.2"
