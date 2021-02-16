@@ -17,7 +17,6 @@ function mean_Lx_plot(sim; species="electron")
     Plots.plot!(plt, ts, m_Lx_plus, label="Lx > 0")
     Plots.plot!(plt, ts, m_Lx_minus, label="Lx < 0")
 
-    Plots.savefig(plt, joinpath(dir, "mean_Lx_l_$l.png"))
     plt
 end
 
@@ -55,12 +54,10 @@ function Lx_section_plots(sim, slice_location = 54.97unit_l; ϵ = 2e-3unit_l, sp
 end
 
 function npart_plot(sim; species="electron")
-    ts = get_time.(sim) |> unit_t
+    ts = get_time.(sim) .|> unit_t
     npart = get_npart.(sim, (species,))
 
-    plt = Plots.plot(ts, npart, xlabel="t", ylabel="N")
-    Plots.savefig(plt, joinpath(dir, "npart.png"))
-    plt
+    Plots.plot(ts, npart, xlabel="t", ylabel="N")
 end
 
 # function center_of_mass_plot(dir, λ, d, species)
