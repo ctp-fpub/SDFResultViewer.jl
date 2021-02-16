@@ -1,9 +1,9 @@
 module SDFResultViewer
 
 export compute_L, compute_Lx,
-    mean_quantity,
+    mean_quantity, approximate_field,
     add_λ_units, unit_l, unit_t, unit_E, unit_B, unit_L, pₑ,
-    average_linear_density_x,
+    average_linear_density_x, npart_plot,
     scalar_field_widget
 
 using SDFResults
@@ -21,7 +21,6 @@ using Transducers, ThreadsX
 
 include("units.jl")
 include("analysis.jl")
-include("angular_momentum.jl")
 include("number_density.jl")
 include("plots.jl")
 include("widgets.jl")

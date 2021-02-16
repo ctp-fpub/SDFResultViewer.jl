@@ -13,13 +13,23 @@ approx_target_size(::ScalarField) = 160
 
 function approximate_field(f::AbstractPICDataStructure, sz::Int=approx_target_size(f))
     if unit(eltype(f)) ≠ NoUnits
-        @debug "Removeing units"
+        @debug "Removing units"
         approximate_field(ustrip(f), sz)
     else
         largest_dim = maximum(size(f))
         factor = largest_dim ÷ sz
+        factor == 0 && return f
         target_size = map(i->i÷factor, size(f))
         @debug "Resizing to size $target_size from $(size(f))"
-        subsample(f, target_size...)
+        downsample(f, target_size...)
     end
+end
+
+function initial_cube(sim, l=100u"nm"; species="electron")
+    file = sim[1]
+    r = file["grid/$species"]
+
+    findall(rᵢ->rᵢ[1] ∈ zero(l)..l &&
+            rᵢ[2] ∈ -l/2..l/2 &&
+            rᵢ[3] ∈ -l/2..l/2, r)
 end
