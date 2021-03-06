@@ -16,7 +16,7 @@ function fix_text!(ax, default=:small)
     end
 end
 
-function scalar_field_widget(f::ScalarField, slice_dir=:x)
+function scalar_field_widget(f::ScalarField, slice_dir=:x; levels=6)
     fig = Figure(resolution=(800, 600))
     f_approx = approximate_field(f)
     cmap = RGBAf0.(to_colormap(:viridis, 50), 1.0)
@@ -25,7 +25,7 @@ function scalar_field_widget(f::ScalarField, slice_dir=:x)
     # Contour plot
     ax, plt = contour(fig[1,1], f_approx,
         # axis = (title="Ex",),
-        levels=6, alpha = 0.3, transparency = true,
+        levels=levels, alpha = 0.3, transparency = true,
         colormap=cmap)
     fix_text!(ax)
 
