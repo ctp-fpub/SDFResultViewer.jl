@@ -1,6 +1,3 @@
-import Plots
-using UnitfulRecipes
-
 function mean_Lx_plot(sim; species="electron")
     Lx(file) = compute_Lx(file, species) |> unit_L
     @time m_Lx = mean(Lx, sim)
