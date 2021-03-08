@@ -78,7 +78,7 @@ function scalar_field_widget(f::ScalarField, slice_dir=:x; levels=6)
         $(DOM.div("Slice at: ", sl_label, sl))
         """
 
-        JSServe.DOM.div(JSServe.MarkdownCSS, JSServe.Styling, dom)
+        DOM.div(JSServe.TailwindCSS, JSServe.Styling, dom)
     end
 
 end

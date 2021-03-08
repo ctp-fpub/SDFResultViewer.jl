@@ -16,9 +16,8 @@ using UnitfulRecipes
 # widgets
 using WGLMakie
 using JSServe
-using JSServe: Slider
+using JSServe: DOM, Slider
 using Markdown
-using JSServe.DOM
 
 include("units.jl")
 include("plots.jl")
