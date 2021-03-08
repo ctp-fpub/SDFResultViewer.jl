@@ -10,8 +10,14 @@ using PICDataStructures: dir_to_idx
 using PICAnalysisTools
 using Unitful
 using PhysicalConstants.CODATA2018: c_0, ε_0, m_e, e
+# plots
 import Plots
 using UnitfulRecipes
+# widgets
+using WGLMakie
+using JSServe
+using JSServe: DOM, Slider
+using Markdown
 
 include("units.jl")
 include("plots.jl")

@@ -1,8 +1,3 @@
-using WGLMakie
-using JSServe
-using Markdown
-using JSServe.DOM
-
 function fix_text!(ax, default=:small)
     sc = ax.scene[OldAxis]
     if default == :big
@@ -16,23 +11,23 @@ function fix_text!(ax, default=:small)
     end
 end
 
-function scalar_field_widget(f::ScalarField, slice_dir=:x)
+function scalar_field_widget(f::ScalarField, slice_dir=:x; levels=6)
     fig = Figure(resolution=(800, 600))
     f_approx = approximate_field(f)
     cmap = RGBAf0.(to_colormap(:viridis, 50), 1.0)
     cmap[1:2] .= RGBAf0(0,0,0,0)
 
+    lvl_slider = Slider(1:20)
     # Contour plot
     ax, plt = contour(fig[1,1], f_approx,
-        # axis = (title="Ex",),
-        levels=6, alpha = 0.3, transparency = true,
+        levels=levels, alpha = 0.3, transparency = true,
         colormap=cmap)
     fix_text!(ax)
 
     # Slider
     dim = dir_to_idx(slice_dir)
     domain_range = f_approx.grid[dim]
-    sl = JSServe.Slider(axes(domain_range, 1))
+    sl = Slider(axes(domain_range, 1))
     sl_label = @lift round(f_approx.grid[dim][$(sl.value)], digits=2)
     # sl_format = x->string(round(x, digits=2))
     # sl = labelslider!(fig, "Slice at:", domain_range, format=sl_format)
@@ -41,11 +36,20 @@ function scalar_field_widget(f::ScalarField, slice_dir=:x)
     # Section through the field
     f_section = @lift(slice(f_approx, dim, $(sl.value)))
     labels = string.(filter(i->i≠slice_dir, (:x,:y,:z)))
-    section_ax, section_plt = contour(fig[1,2], f_section)
+    section_ax, section_plt = contour(fig[1,2], f_section, levels=levels)
 
     section_ax.xlabel = labels[1]
     section_ax.ylabel = labels[2]
     section_ax.aspect = DataAspect()
+
+    legend = Colorbar(fig, section_plt,
+        label = "Field values",
+        width = Relative(3/4),
+        height = 10,
+        vertical = false,
+        tellheight = true,
+        colormap = cgrad(:viridis, levels, categorical = true))
+    fig[2,1:2] = legend
 
     # Transparent plane
 
@@ -74,7 +78,7 @@ function scalar_field_widget(f::ScalarField, slice_dir=:x)
         $(DOM.div("Slice at: ", sl_label, sl))
         """
 
-        JSServe.DOM.div(JSServe.MarkdownCSS, JSServe.Styling, dom)
+        DOM.div(JSServe.TailwindCSS, JSServe.Styling, dom)
     end
 
 end
