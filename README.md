@@ -18,3 +18,28 @@ After that, you can install the package with
 ```
 ]add SDFResultViewer
 ```
+
+## Quck start
+
+```julia
+using SDFResults
+using SDFResultViewer
+using WGLMakie
+using Unitful
+using PhysicalConstants.CODATA2018: c_0, ε_0, m_e, e
+
+dir = "epoch_simulation"
+sim = read_simulation(dir)
+file = sim[4]
+
+λ = get_parameter(file, :lambda)
+ω = 2π * c_0 / λ
+nc = (ε_0 * m_e) / e^2 * ω^2
+
+add_λ_units(λ)
+Ex = file[:ex]
+
+scalar_field_widget(uconvert(unit_E, unit_l, Ex))
+```
+
+![widget](assets/widget.png)
