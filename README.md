@@ -6,3 +6,15 @@
 [![Coverage](https://codecov.io/gh/SebastianM-C/SDFResultViewer.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/SebastianM-C/SDFResultViewer.jl)
 
 This package aims to provide visualization tools for [EPOCH](https://cfsa-pmw.warwick.ac.uk/mediawiki/index.php/EPOCH:FAQ) simulations.
+
+## Installation
+
+In order to use this package you need to add the [ctp-fpub Julia registry](https://github.com/ctp-fpub/JuliaRegistry)
+```
+]registry add https://github.com:ctp-fpub/JuliaRegistry.git
+```
+
+After that, you can install the package with
+```
+]add SDFResultViewer
+```
