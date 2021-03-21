@@ -1,7 +1,7 @@
 name = "SDFResultViewer"
 uuid = "7a8fc443-14dd-4e51-a296-5a2c4c9a1dbb"
 authors = ["Sebastian Micluța-Câmpeanu <m.c.sebastian95@gmail.com> and contributors"]
-version = "0.1.1"
+version = "0.2.0"
 
 [deps]
 JSServe = "824d6782-a2ef-11e9-3a09-e5662e0c26f9"
@@ -17,7 +17,7 @@ WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
 [compat]
 JSServe = "1.2"
-PICDataStructures = "0.1"
+PICDataStructures = "0.3"
 PhysicalConstants = "0.2"
 Plots = "1.10"
 SDFResults = "0.1"

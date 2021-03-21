@@ -11,37 +11,68 @@ function fix_text!(ax, default=:small)
     end
 end
 
-function scalar_field_widget(f::ScalarField, slice_dir=:x; levels=6)
-    fig = Figure(resolution=(800, 600))
-    f_approx = approximate_field(f)
-    cmap = RGBAf0.(to_colormap(:viridis, 50), 1.0)
-    cmap[1:2] .= RGBAf0(0,0,0,0)
+function default3d_plot!(fig, f::ScalarField, cmap; kwargs...)
+    if !haskey(kwargs, :levels)
+        kwargs = Iterators.flatten((kwargs, (:levels=>6,)))
+    end
 
-    lvl_slider = Slider(1:20)
-    # Contour plot
-    ax, plt = contour(fig[1,1], f_approx,
-        levels=levels, alpha = 0.3, transparency = true,
-        colormap=cmap)
-    fix_text!(ax)
+    contour(fig[1,1], f,
+        alpha = 0.3, transparency = true, colormap=cmap; kwargs...)
+end
 
-    # Slider
+function default3d_plot!(fig, f::ScalarVariable, cmap; kwargs...)
+    size = get(kwargs, :size3d, 20)
+
+    scattervariable(fig[1,1], f, size=size)
+end
+
+function section_plot!(fig, f::ScalarField, slice_dir, idx_value; kwargs...)
     dim = dir_to_idx(slice_dir)
-    domain_range = f_approx.grid[dim]
-    sl = Slider(axes(domain_range, 1))
-    sl_label = @lift round(f_approx.grid[dim][$(sl.value)], digits=2)
-    # sl_format = x->string(round(x, digits=2))
-    # sl = labelslider!(fig, "Slice at:", domain_range, format=sl_format)
-    # fig[2, 1] = sl.layout
-
-    # Section through the field
-    f_section = @lift(slice(f_approx, dim, $(sl.value)))
+    levels = get(kwargs, :levels, 6)
+    f_section = @lift(slice(f, dim, $idx_value))
     labels = string.(filter(i->i≠slice_dir, (:x,:y,:z)))
+
     section_ax, section_plt = contour(fig[1,2], f_section, levels=levels)
 
     section_ax.xlabel = labels[1]
     section_ax.ylabel = labels[2]
     section_ax.aspect = DataAspect()
 
+    return section_ax, section_plt
+end
+
+function section_plot!(fig, f::ScalarVariable, slice_dir, idx_value; kwargs...)
+    dim = dir_to_idx(slice_dir)
+    ϵ = get(kwargs, :ϵ, 0.2)
+    grid = getdomain(f)
+    sort!(f, dim)
+
+    f_section = @lift slice(f, dim, $idx_value, ϵ)
+    # map(idx_value) do idx
+    #     @debug idx dim ϵ
+    #     s = slice(f, dim, idx, ϵ)
+    #     g = getdomain(s)
+    #     @debug typeof(s)
+    #     @debug "grid info: " minimum(g) maximum(g) length(g)
+    #     s
+    # end
+    labels = string.(filter(i->i≠slice_dir, (:x,:y,:z)))
+
+    section_ax, section_plt = scattervariable(fig[1,2], f_section, size=2)
+
+    on(idx_value) do idx
+        autolimits!(section_ax)
+    end
+
+    section_ax.xlabel = labels[1]
+    section_ax.ylabel = labels[2]
+    section_ax.aspect = DataAspect()
+
+    return section_ax, section_plt
+end
+
+function add_legend!(fig, section_plt, ::ScalarField; kwargs...)
+    levels = get(kwargs, :levels, 6)
     legend = Colorbar(fig, section_plt,
         label = "Field values",
         width = Relative(3/4),
@@ -49,16 +80,74 @@ function scalar_field_widget(f::ScalarField, slice_dir=:x; levels=6)
         vertical = false,
         tellheight = true,
         colormap = cgrad(:viridis, levels, categorical = true))
+
     fig[2,1:2] = legend
+end
+
+function add_legend!(fig, section_plt, ::ScalarVariable; kwargs...)
+    # legend = Colorbar(fig, section_plt,
+    #     label = "Variable values",
+    #     width = Relative(3/4),
+    #     height = 10,
+    #     vertical = false,
+    #     tellheight = true,
+    #     colormap = cgrad(:viridis))
+
+    # fig[2,1:2] = legend
+end
+
+function slider(f::ScalarField, slice_dir; kwargs...)
+    dim = dir_to_idx(slice_dir)
+    grid = getdomain(f)
+    slider_domain = grid[dim]
+    sl = Slider(axes(slider_domain, 1))
+    sl_label = @lift round(slider_domain[$(sl.value)], digits=2)
+
+    return sl, sl_label
+end
+
+function slider(f::ScalarVariable, slice_dir; kwargs...)
+    dim = dir_to_idx(slice_dir)
+    grid = getdomain(f)
+    slider_domain = grid[dim]
+    sl = Slider(1:2*10^4:length(slider_domain))
+    @debug sl.value
+    sl_label = @lift round(grid[dim][$(sl.value)], digits=2)
+
+    return sl, sl_label
+end
+
+function section_widget(f, slice_dir=:x; kwargs...)
+    fig = Figure(resolution=(800, 600))
+    f_approx = approximate_field(f)
+    grid = getdomain(f_approx)
+    dim = dir_to_idx(slice_dir)
+    cmap = RGBAf0.(to_colormap(:viridis, 50), 1.0)
+    cmap[1:2] .= RGBAf0(0,0,0,0)
+
+    lvl_slider = Slider(1:20)
+    # Contour plot
+    ax, plt = default3d_plot!(fig, f_approx, cmap; kwargs...)
+    fix_text!(ax)
+
+    # Slider
+    sl, sl_label = slider(f_approx, slice_dir; kwargs...)
+
+    # Section through the field
+    section_ax, section_plt = section_plot!(fig, f_approx, slice_dir, sl.value; kwargs...)
+
+    add_legend!(fig, section_plt, f; kwargs...)
 
     # Transparent plane
 
-    plane_origin = [g[1] for g in f_approx.grid]
-    ws = [g[end] - g[1] for g in f_approx.grid]
+    plane_origin = [minimum(grid)...]
+    ws = maximum(grid) .- plane_origin
     ws[dim] = 0
 
     p = lift(sl.value) do idx
-        new_origin = f_approx.grid[dim][idx]
+        update!(fig.scene)
+
+        new_origin = grid[dim][idx]
         plane_origin[dim] = new_origin
         origin = Point3f0(plane_origin...)
         widths = Point3f0(ws...)
