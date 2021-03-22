@@ -17,7 +17,7 @@ WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
 [compat]
 JSServe = "1.2"
-PICDataStructures = "0.1"
+PICDataStructures = "0.1, 0.3"
 PhysicalConstants = "0.2"
 Plots = "1.10"
 SDFResults = "0.1"
