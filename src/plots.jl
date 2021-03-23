@@ -1,3 +1,289 @@
+# !!!!!! in these plots the simulation cells must be cubes (i.e. all sides equal)
+# the photon species can be selected
+function photon_dens_integrated(sim; species = "photon", direction = :x, plot_title = "Photon number density integrated along x-axis")
+    file = sim[1]
+    a = ustrip(u"μm",uconvert(u"μm^3",cell_volume(file))^(1/3))
+    n₀ = file["number_density/electron"]
+    
+    file = sim[end]
+    nᵧ = file["number_density/$species"]
+
+    kwargs = (color=:rainbow, 
+              colorbar_title="nᵧ/n₀",
+              tick_direction = :out,
+              minorticks = true,
+              title = plot_title
+    )
+
+    if direction == :x
+        nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=1), dims=1)
+        n₀_int = dropdims(sum(n₀*cell_volume(file), dims=1), dims=1)
+        plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a, [1:1:size(nᵧ_int,2)]*a, transpose(nᵧ_int ./ n₀_int), size = (600,500); kwargs...)
+        
+        length_y = ustrip(u"μm", get_parameter(sim[1], :y_max) - get_parameter(sim[1], :y_min))
+        length_z = ustrip(u"μm", get_parameter(sim[1], :z_max) - get_parameter(sim[1], :z_min))
+
+        Plots.plot!(plt,
+              xlabel = "y (μm)", 
+              xticks=(1:2:length_y),
+              ylabel = "z (μm)", 
+              yticks=(1:2:length_z)
+        )
+
+        return plt
+    elseif direction == :y
+        nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=2), dims=2)
+        n₀_int = dropdims(sum(n₀*cell_volume(file), dims=2), dims=2)
+        plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a, [1:1:size(nᵧ_int,2)]*a, transpose(nᵧ_int ./ n₀_int), size = (665,500); kwargs...)
+
+        length_x = ustrip(u"μm", get_parameter(sim[1], :x_max) - get_parameter(sim[1], :x_min))
+        length_z = ustrip(u"μm", get_parameter(sim[1], :z_max) - get_parameter(sim[1], :z_min))
+
+        Plots.plot!(plt,
+              xlabel = "x (μm)", 
+              xticks=(1:2:length_x),
+              ylabel = "z (μm)", 
+              yticks=(1:2:length_z)
+        )
+
+        return plt
+    elseif direction == :z
+        nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=3), dims=3)
+        n₀_int = dropdims(sum(n₀*cell_volume(file), dims=3), dims=3)
+        plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a, [1:1:size(nᵧ_int,2)]*a, transpose(nᵧ_int ./ n₀_int), size = (665,500); kwargs...)
+
+        length_x = ustrip(u"μm", get_parameter(sim[1], :x_max) - get_parameter(sim[1], :x_min))
+        length_y = ustrip(u"μm", get_parameter(sim[1], :y_max) - get_parameter(sim[1], :y_min))
+
+        Plots.plot!(plt,
+              xlabel = "x (μm)", 
+              xticks=(1:2:length_x),
+              ylabel = "y (μm)", 
+              yticks=(1:2:length_y)
+        )
+
+        return plt
+    end
+end
+
+# !!!!!! in these plots the simulation cells must be cubes (i.e. all sides equal)
+# the photon species can be selected
+# !!!!!! y and z directions have problems. to be investigated...
+function photon_en_dens_integrated(sim; species = "photon", direction = :x, endens_scale = 10^12 , plot_title = "Photon energy density integrated along x-axis")
+    file = sim[end]
+    a = ustrip(u"μm",uconvert(u"μm^3",cell_volume(file))^(1/3))
+    nᵧ, enᵧ= file["number_density/$species", "ekbar/$species"]
+    enᵧ = ustrip.(u"MeV",enᵧ)
+
+    kwargs = (color=:rainbow, 
+             colorbar_title="ϵᵧ 10¹²(MeV/μm²)", 
+             size = (665,600),
+             tick_direction = :out,
+             minorticks = true,
+             title = plot_title
+    )
+
+    if direction == :x
+        n = uconvert(NoUnits, nᵧ*cell_volume(file).*enᵧ)
+        nᵧ_int = dropdims(sum(n, dims=1), dims=1) / a^2 / endens_scale
+        nt = transpose(nᵧ_int)
+
+        plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
+
+        length_y = ustrip(u"μm", get_parameter(sim[1], :y_max) - get_parameter(sim[1], :y_min))
+        length_z = ustrip(u"μm", get_parameter(sim[1], :z_max) - get_parameter(sim[1], :z_min))
+
+        Plots.plot!(plt,
+              xlabel = "y (μm)", 
+              xticks=(1:2:length_y),
+              ylabel = "z (μm)", 
+              yticks=(1:2:length_z)
+        )
+
+        return plt
+    elseif direction == :y
+        n = uconvert(NoUnits, nᵧ*cell_volume(file).*enᵧ)
+        nᵧ_int = dropdims(sum(n, dims=2), dims=2) / a^2 /endens_scale
+        nt = transpose(nᵧ_int)
+
+        plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
+
+        length_x = ustrip(u"μm", get_parameter(sim[1], :x_max) - get_parameter(sim[1], :x_min))
+        length_z = ustrip(u"μm", get_parameter(sim[1], :z_max) - get_parameter(sim[1], :z_min))
+
+        Plots.plot!(plt,
+              xlabel = "x (μm)", 
+              xticks=(1:2:length_x),
+              ylabel = "z (μm)", 
+              yticks=(1:2:length_z)
+        )
+
+        return plt
+    elseif direction == :z
+        n = uconvert(NoUnits, nᵧ*cell_volume(file).*enᵧ)
+        nᵧ_int = dropdims(sum(n, dims=3), dims=3) / a^2 /endens_scale
+        nt = transpose(nᵧ_int)
+
+        plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
+
+        length_x = ustrip(u"μm", get_parameter(sim[1], :x_max) - get_parameter(sim[1], :x_min))
+        length_y = ustrip(u"μm", get_parameter(sim[1], :y_max) - get_parameter(sim[1], :y_min))
+
+        Plots.plot!(plt,
+              xlabel = "x (μm)", 
+              xticks=(1:2:length_x),
+              ylabel = "y (μm)", 
+              yticks=(1:2:length_y)
+        )
+
+        return plt
+    end
+end
+
+# photon energy spectra sᵧ² dN/dsᵧ = f(sᵧ = log₁₀(E/keV))
+# the photon species can be selected
+# one can filter photons in cone. default angle is pi (180⁰), i.e. all photons going to the right
+# ! angle argument is given in radians
+function photon_energy_spectrum(sim; label = "label", mark_max = false, angle = pi, species = "photon", plot_title = "Compton scattering spectrum")
+    file = sim[end]
+    px, py, pz = file["px/$species", "py/$species", "pz/$species"]
+    # filtering data: keep only photons moving in the direction of the laser
+    idx = findall(p -> p > 0, ustrip.(u"kg*m/s",px))
+    px = px[idx]
+    py = py[idx]
+    pz = pz[idx]
+
+    # θ is measured from the x axis
+    # filtering data: keep photons that propagate within 2θ
+    pₚₑᵣₚ = sqrt.(py.^2 + pz.^2)   #transversal momentum of each photon
+    θ = atan.(pₚₑᵣₚ./px)           #emission angles for each photon
+    idx = findall(θ₀ -> θ₀ < angle/2, θ)
+    px = px[idx]
+    py = py[idx]
+    pz = pz[idx]
+
+    # make plot
+    Eᵧ = sqrt.(px.^2 + py.^2 + pz.^2) * c_0
+    sᵧ = log.(ustrip(u"keV", Eᵧ))
+
+    h = fit(Histogram, sᵧ; nbins = 200)
+    s = midpoints(collect(h.edges[1]))
+    N = h.weights
+    dNds = N./abs(s[1]-s[2]) 
+
+    idx = findall(x -> x > 0, s)
+    s = s[idx]
+    dNds = dNds[idx]
+
+    kwargs = (xlabel = "sᵧ = log₁₀(Eᵧ/keV)", 
+              ylabel = "sᵧ² dN/dsᵧ", 
+              label = label,
+              tickfontsize = 10, 
+              guidefontsize = 15, 
+              title = plot_title,
+              legendfontsize = 15, 
+              legendtitlefont = 15,
+              titlefont = 16
+    )
+    
+    plt = Plots.plot(s, dNds.*s.*s, linewidth = 4; kwargs...)
+
+    if mark_max
+        dNds = dNds.*s.*s
+        p0 = findfirst(smax -> smax == maximum(dNds), dNds)
+        Plots.plot!(plt, [s[p0]], [dNds[p0]], seriestype = :scatter, 
+                                    markersize = 7, 
+                                    markercolor = :black,
+                                    label = false
+        )
+    end
+
+    return plt
+end
+
+# energy spectra s² dN/ds = f(s = log₁₀(E/MeV)) for particles with mass
+# at the moment, time has to be added by hand
+function energy_spectrum(sim; mass = m_e, species = "electron", plot_title = "Electron energy spectrum")
+    file = sim[end]
+    px, py, pz = file["px/$species", "py/$species", "pz/$species"]
+
+    #should be implemented: read species mass from input.deck
+    E₀ = sqrt.(mass^2*c_0^4 .+ (px.^2 + py.^2 + pz.^2) * c_0^2)
+    s₀ = log.(ustrip(u"MeV", E₀))
+
+    h = fit(Histogram, s₀; nbins = 200)
+    s = midpoints(collect(h.edges[1]))
+    N = h.weights
+    dNds = N./abs(s[1]-s[2]) 
+
+    idx = findall(x -> x > 0, s)
+    s = s[idx]
+    dNds = dNds[idx]
+
+    kwargs = (xlabel = "s = log₁₀(E/MeV)", 
+              ylabel = "s² dN/ds", 
+              tickfontsize = 10, 
+              guidefontsize = 15, 
+              title = plot_title,
+              legendfontsize = 15, 
+              legendtitlefont = 15,
+              titlefont = 16
+    )
+    
+    plt = Plots.plot(s, dNds.*s.*s, linewidth = 4; kwargs...)
+
+    return plt
+end
+
+# Angular distribution of gamma energy emission (MeV/srad)
+# angles are given by the direction of the momentum (the reference axis is Ox)
+# one can filter photons in cone. default angle is pi (180⁰), i.e. all photons going to the right
+# ! angle argument is given in radians
+function photon_solid_angle_emission(sim;  angle = pi, species = "photon", plot_title = "Solid angle emission")
+    file = sim[end]
+
+    px, py, pz= file["px/$species",
+                     "py/$species",
+                     "pz/$species"
+    ]
+
+    idx = findall(p -> p > 0, ustrip.(u"kg*m/s",px))
+    px = px[idx]
+    py = py[idx]
+    pz = pz[idx]
+    
+    pₚₑᵣₚ = sqrt.(py.^2 + pz.^2)   #transversal momentum of each photon
+    θ = atan.(pₚₑᵣₚ./px)           #emission angles for each photon
+    ϕ = atan.(py, pz)
+
+    # filtering data: keep photons that propagate within 2θ
+    idx = findall(θ₀ -> θ₀ < angle/2, θ)
+    px = px[idx]
+    py = py[idx]
+    pz = pz[idx]
+    θ = θ[idx]
+    ϕ = ϕ[idx]
+
+    Eᵧ = sqrt.(px.^2 + py.^2 + pz.^2) * c_0
+
+    data = (ϕ .+ π, θ)
+    w = weights(ustrip.(u"MeV", Eᵧ))
+
+    h = fit(Histogram, data, w, nbins = (360,90))
+    xedges = collect(h.edges[1]) 
+    yedges = collect(h.edges[2]) *180/pi
+    H = h.weights
+
+    ax = PyPlot.Axes3D(PyPlot.figure())
+    PyPlot.subplot(projection="polar")
+    PyPlot.pcolormesh(xedges[2:end], yedges[2:end], transpose(H))
+    PyPlot.colorbar(label = "dEᵧ/dΩ (MeV/srad)")
+    PyPlot.title(plot_title)
+    ax[:grid](true)
+    # PyPlot.display(PyPlot.gcf())
+    return PyPlot.gcf()
+end
+
 function mean_Lx_plot(sim; species="electron")
     Lx(file) = compute_Lx(file, species) |> unit_L
     @time m_Lx = mean(Lx, sim)

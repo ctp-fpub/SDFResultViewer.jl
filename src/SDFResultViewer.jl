@@ -12,6 +12,7 @@ using Unitful
 using PhysicalConstants.CODATA2018: c_0, ε_0, m_e, e
 # plots
 import Plots
+import PyPlot
 using UnitfulRecipes
 # widgets
 using WGLMakie
