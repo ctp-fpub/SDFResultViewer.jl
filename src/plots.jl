@@ -1,3 +1,39 @@
+# gives domain length along a specified direction
+function domain_length(sim, direction::Symbol)
+    get_parameter(sim[1], Symbol("$(direction)_max")) - get_parameter(sim[1], Symbol("$(direction)_min"))
+end
+
+@doc """
+    powertostring(base, number)
+
+Converts a number b^p into a string "bᵖ".
+
+#Example
+```julia-repl
+julia> powertostring(2, 2^BigInt(1345))
+"2¹³⁴⁵"
+```
+"""
+function powertostring(base, number)
+    power = Int(log(base,number)) #scale = 10^power
+    d = Dict(0 => "⁰",
+             1 => "¹",
+             2 => "²",
+             3 => "³",
+             4 => "⁴",
+             5 => "⁵",
+             6 => "⁶",
+             7 => "⁷",
+             8 => "⁸",
+             9 => "⁹"
+    ) # tried Dict([(i, "\^$i") for i in 0:1:9]), but didn't work
+    s = "$base"
+    for i in reverse(digits(power))
+        s = s*d[i]
+    end
+    return s
+end
+
 # !!!!!! in these plots the simulation cells must be cubes (i.e. all sides equal)
 # the photon species can be selected
 function photon_dens_integrated(sim; species = "photon", direction = :x, plot_title = "Photon number density integrated along x-axis")
@@ -19,15 +55,11 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
         nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=1), dims=1)
         n₀_int = dropdims(sum(n₀*cell_volume(file), dims=1), dims=1)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a, [1:1:size(nᵧ_int,2)]*a, transpose(nᵧ_int ./ n₀_int), size = (600,500); kwargs...)
-        
-        length_y = ustrip(u"μm", get_parameter(sim[1], :y_max) - get_parameter(sim[1], :y_min))
-        length_z = ustrip(u"μm", get_parameter(sim[1], :z_max) - get_parameter(sim[1], :z_min))
-
-        Plots.plot!(plt,
+        plot!(plt,
               xlabel = "y (μm)", 
-              xticks=(1:2:length_y),
+              xticks = (1:2:ustrip(u"μm", domain_length(sim, :y))),
               ylabel = "z (μm)", 
-              yticks=(1:2:length_z)
+              yticks = (1:2:ustrip(u"μm", domain_length(sim, :z)))
         )
 
         return plt
@@ -35,15 +67,11 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
         nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=2), dims=2)
         n₀_int = dropdims(sum(n₀*cell_volume(file), dims=2), dims=2)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a, [1:1:size(nᵧ_int,2)]*a, transpose(nᵧ_int ./ n₀_int), size = (665,500); kwargs...)
-
-        length_x = ustrip(u"μm", get_parameter(sim[1], :x_max) - get_parameter(sim[1], :x_min))
-        length_z = ustrip(u"μm", get_parameter(sim[1], :z_max) - get_parameter(sim[1], :z_min))
-
-        Plots.plot!(plt,
+        plot!(plt,
               xlabel = "x (μm)", 
-              xticks=(1:2:length_x),
+              xticks = (1:2:ustrip(u"μm", domain_length(sim, :x))),
               ylabel = "z (μm)", 
-              yticks=(1:2:length_z)
+              yticks = (1:2:ustrip(u"μm", domain_length(sim, :z)))
         )
 
         return plt
@@ -51,15 +79,11 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
         nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=3), dims=3)
         n₀_int = dropdims(sum(n₀*cell_volume(file), dims=3), dims=3)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a, [1:1:size(nᵧ_int,2)]*a, transpose(nᵧ_int ./ n₀_int), size = (665,500); kwargs...)
-
-        length_x = ustrip(u"μm", get_parameter(sim[1], :x_max) - get_parameter(sim[1], :x_min))
-        length_y = ustrip(u"μm", get_parameter(sim[1], :y_max) - get_parameter(sim[1], :y_min))
-
-        Plots.plot!(plt,
+        plot!(plt,
               xlabel = "x (μm)", 
-              xticks=(1:2:length_x),
+              xticks=(1:2:ustrip(u"μm", domain_length(sim, :x))),
               ylabel = "y (μm)", 
-              yticks=(1:2:length_y)
+              yticks=(1:2:ustrip(u"μm", domain_length(sim, :y)))
         )
 
         return plt
@@ -75,8 +99,9 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
     nᵧ, enᵧ= file["number_density/$species", "ekbar/$species"]
     enᵧ = ustrip.(u"MeV",enᵧ)
 
+    scale = powertostring(10, endens_scale)
     kwargs = (color=:rainbow, 
-             colorbar_title="ϵᵧ 10¹²(MeV/μm²)", 
+             colorbar_title="ϵᵧ ($scale MeV/μm²)", 
              size = (665,600),
              tick_direction = :out,
              minorticks = true,
@@ -89,15 +114,11 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
         nt = transpose(nᵧ_int)
 
         plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
-
-        length_y = ustrip(u"μm", get_parameter(sim[1], :y_max) - get_parameter(sim[1], :y_min))
-        length_z = ustrip(u"μm", get_parameter(sim[1], :z_max) - get_parameter(sim[1], :z_min))
-
-        Plots.plot!(plt,
+        plot!(plt,
               xlabel = "y (μm)", 
-              xticks=(1:2:length_y),
+              xticks = (1:2:ustrip(u"μm", domain_length(sim, :y))),
               ylabel = "z (μm)", 
-              yticks=(1:2:length_z)
+              yticks = (1:2:ustrip(u"μm", domain_length(sim, :z)))
         )
 
         return plt
@@ -107,15 +128,11 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
         nt = transpose(nᵧ_int)
 
         plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
-
-        length_x = ustrip(u"μm", get_parameter(sim[1], :x_max) - get_parameter(sim[1], :x_min))
-        length_z = ustrip(u"μm", get_parameter(sim[1], :z_max) - get_parameter(sim[1], :z_min))
-
-        Plots.plot!(plt,
+        plot!(plt,
               xlabel = "x (μm)", 
-              xticks=(1:2:length_x),
+              xticks = (1:2:ustrip(u"μm", domain_length(sim, :x))),
               ylabel = "z (μm)", 
-              yticks=(1:2:length_z)
+              yticks = (1:2:ustrip(u"μm", domain_length(sim, :z)))
         )
 
         return plt
@@ -125,15 +142,11 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
         nt = transpose(nᵧ_int)
 
         plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
-
-        length_x = ustrip(u"μm", get_parameter(sim[1], :x_max) - get_parameter(sim[1], :x_min))
-        length_y = ustrip(u"μm", get_parameter(sim[1], :y_max) - get_parameter(sim[1], :y_min))
-
-        Plots.plot!(plt,
+        plot!(plt,
               xlabel = "x (μm)", 
-              xticks=(1:2:length_x),
+              xticks=(1:2:ustrip(u"μm", domain_length(sim, :x))),
               ylabel = "y (μm)", 
-              yticks=(1:2:length_y)
+              yticks=(1:2:ustrip(u"μm", domain_length(sim, :y)))
         )
 
         return plt
@@ -144,11 +157,14 @@ end
 # the photon species can be selected
 # one can filter photons in cone. default angle is pi (180⁰), i.e. all photons going to the right
 # ! angle argument is given in radians
+@doc """
+Photon energy spectra sᵧ² dN/dsᵧ = f(sᵧ = log₁₀(E/keV))
+"""
 function photon_energy_spectrum(sim; label = "label", mark_max = false, angle = pi, species = "photon", plot_title = "Compton scattering spectrum")
     file = sim[end]
     px, py, pz = file["px/$species", "py/$species", "pz/$species"]
     # filtering data: keep only photons moving in the direction of the laser
-    idx = findall(p -> p > 0, ustrip.(u"kg*m/s",px))
+    idx = findall(p -> p > zero(eltype(px)), px)
     px = px[idx]
     py = py[idx]
     pz = pz[idx]
@@ -201,8 +217,10 @@ function photon_energy_spectrum(sim; label = "label", mark_max = false, angle = 
     return plt
 end
 
-# energy spectra s² dN/ds = f(s = log₁₀(E/MeV)) for particles with mass
-# at the moment, time has to be added by hand
+@doc """
+Energy spectra s² dN/ds = f(s = log₁₀(E/MeV)) for particles with mass.
+The mass of the particle has to be added by hand with the mass argument (default is the electron mass).
+"""
 function energy_spectrum(sim; mass = m_e, species = "electron", plot_title = "Electron energy spectrum")
     file = sim[end]
     px, py, pz = file["px/$species", "py/$species", "pz/$species"]
@@ -247,7 +265,7 @@ function photon_solid_angle_emission(sim;  angle = pi, species = "photon", plot_
                      "pz/$species"
     ]
 
-    idx = findall(p -> p > 0, ustrip.(u"kg*m/s",px))
+    idx = findall(p -> p > zero(eltype(px)), px)
     px = px[idx]
     py = py[idx]
     pz = pz[idx]
@@ -271,7 +289,7 @@ function photon_solid_angle_emission(sim;  angle = pi, species = "photon", plot_
 
     h = fit(Histogram, data, w, nbins = (360,90))
     xedges = collect(h.edges[1]) 
-    yedges = collect(h.edges[2]) *180/pi
+    yedges = rad2deg.(h.edges[2]) 
     H = h.weights
 
     ax = PyPlot.Axes3D(PyPlot.figure())
