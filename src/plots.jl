@@ -55,7 +55,7 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
         nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=1), dims=1)
         n₀_int = dropdims(sum(n₀*cell_volume(file), dims=1), dims=1)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a, [1:1:size(nᵧ_int,2)]*a, transpose(nᵧ_int ./ n₀_int), size = (600,500); kwargs...)
-        plot!(plt,
+        Plots.plot!(plt,
               xlabel = "y (μm)", 
               xticks = (1:2:ustrip(u"μm", domain_length(sim, :y))),
               ylabel = "z (μm)", 
@@ -67,7 +67,7 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
         nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=2), dims=2)
         n₀_int = dropdims(sum(n₀*cell_volume(file), dims=2), dims=2)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a, [1:1:size(nᵧ_int,2)]*a, transpose(nᵧ_int ./ n₀_int), size = (665,500); kwargs...)
-        plot!(plt,
+        Plots.plot!(plt,
               xlabel = "x (μm)", 
               xticks = (1:2:ustrip(u"μm", domain_length(sim, :x))),
               ylabel = "z (μm)", 
@@ -79,7 +79,7 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
         nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=3), dims=3)
         n₀_int = dropdims(sum(n₀*cell_volume(file), dims=3), dims=3)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a, [1:1:size(nᵧ_int,2)]*a, transpose(nᵧ_int ./ n₀_int), size = (665,500); kwargs...)
-        plot!(plt,
+        Plots.plot!(plt,
               xlabel = "x (μm)", 
               xticks=(1:2:ustrip(u"μm", domain_length(sim, :x))),
               ylabel = "y (μm)", 
@@ -114,7 +114,7 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
         nt = transpose(nᵧ_int)
 
         plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
-        plot!(plt,
+        Plots.plot!(plt,
               xlabel = "y (μm)", 
               xticks = (1:2:ustrip(u"μm", domain_length(sim, :y))),
               ylabel = "z (μm)", 
@@ -128,7 +128,7 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
         nt = transpose(nᵧ_int)
 
         plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
-        plot!(plt,
+        Plots.plot!(plt,
               xlabel = "x (μm)", 
               xticks = (1:2:ustrip(u"μm", domain_length(sim, :x))),
               ylabel = "z (μm)", 
@@ -142,7 +142,7 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
         nt = transpose(nᵧ_int)
 
         plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
-        plot!(plt,
+        Plots.plot!(plt,
               xlabel = "x (μm)", 
               xticks=(1:2:ustrip(u"μm", domain_length(sim, :x))),
               ylabel = "y (μm)", 
