@@ -1,8 +1,3 @@
-# gives domain length along a specified direction
-function domain_length(sim, direction::Symbol)
-    get_parameter(sim[1], Symbol("$(direction)_max")) - get_parameter(sim[1], Symbol("$(direction)_min"))
-end
-
 @doc """
     powertostring(base, number)
 
@@ -50,35 +45,35 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
               minorticks = true,
               title = plot_title
     )
-
-    nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=dir_to_idx(direction)), dims=dir_to_idx(direction))
-    n₀_int = dropdims(sum(n₀*cell_volume(file), dims=dir_to_idx(direction)), dims=dir_to_idx(direction))
+    dim = dir_to_idx(direction)
+    nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=dim), dims=dim)
+    n₀_int = dropdims(sum(n₀*cell_volume(file), dims=dim), dims=dim)
     plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a, [1:1:size(nᵧ_int,2)]*a, transpose(nᵧ_int ./ n₀_int); kwargs...)
     
     if direction == :x
         Plots.plot!(plt,
               xlabel = "y (μm)", 
-              xticks = (1:2:ustrip(u"μm", domain_length(sim, :y))),
+              xticks = (1:2:ustrip(u"μm", domain_length(sim[1], :y))),
               ylabel = "z (μm)", 
-              yticks = (1:2:ustrip(u"μm", domain_length(sim, :z))), 
+              yticks = (1:2:ustrip(u"μm", domain_length(sim[1], :z))), 
               size = (600,500)
         )
         return plt
     elseif direction == :y
         Plots.plot!(plt,
-              xlabel = "x (μm)", 
-              xticks = (1:2:ustrip(u"μm", domain_length(sim, :x))),
-              ylabel = "z (μm)", 
-              yticks = (1:2:ustrip(u"μm", domain_length(sim, :z))), 
+              xlabel = "x", 
+              xticks = (1:2:ustrip(u"μm", domain_length(sim[1], :x))),
+              ylabel = "z", 
+              yticks = (1:2:ustrip(u"μm", domain_length(sim[1], :z))), 
               size = (665,500)
         )
         return plt
     elseif direction == :z
         Plots.plot!(plt,
               xlabel = "x (μm)", 
-              xticks=(1:2:ustrip(u"μm", domain_length(sim, :x))),
+              xticks=(1:2:ustrip(u"μm", domain_length(sim[1], :x))),
               ylabel = "y (μm)", 
-              yticks=(1:2:ustrip(u"μm", domain_length(sim, :y))), 
+              yticks=(1:2:ustrip(u"μm", domain_length(sim[1], :y))), 
               size = (665,500)
         )
         return plt
@@ -102,34 +97,35 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
              minorticks = true,
              title = plot_title
     )
+    dim = dir_to_idx(direction)
     n = uconvert(NoUnits, nᵧ*cell_volume(file).*enᵧ)
-    nᵧ_int = dropdims(sum(n, dims=dir_to_idx(direction)), dims=dir_to_idx(direction)) / a^2 / endens_scale
+    nᵧ_int = dropdims(sum(n, dims=dim), dims=dim) / a^2 / endens_scale
     nt = transpose(nᵧ_int)
     plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
 
     if direction == :x
         Plots.plot!(plt,
               xlabel = "y (μm)", 
-              xticks = (1:2:ustrip(u"μm", domain_length(sim, :y))),
+              xticks = (1:2:ustrip(u"μm", domain_length(sim[1], :y))),
               ylabel = "z (μm)", 
-              yticks = (1:2:ustrip(u"μm", domain_length(sim, :z)))
+              yticks = (1:2:ustrip(u"μm", domain_length(sim[1], :z)))
         )
         return plt
     elseif direction == :y
         plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
         Plots.plot!(plt,
               xlabel = "x (μm)", 
-              xticks = (1:2:ustrip(u"μm", domain_length(sim, :x))),
+              xticks = (1:2:ustrip(u"μm", domain_length(sim[1], :x))),
               ylabel = "z (μm)", 
-              yticks = (1:2:ustrip(u"μm", domain_length(sim, :z)))
+              yticks = (1:2:ustrip(u"μm", domain_length(sim[1], :z)))
         )
         return plt
     elseif direction == :z
         Plots.plot!(plt,
               xlabel = "x (μm)", 
-              xticks=(1:2:ustrip(u"μm", domain_length(sim, :x))),
+              xticks=(1:2:ustrip(u"μm", domain_length(sim[1], :x))),
               ylabel = "y (μm)", 
-              yticks=(1:2:ustrip(u"μm", domain_length(sim, :y)))
+              yticks=(1:2:ustrip(u"μm", domain_length(sim[1], :y)))
         )
         return plt
     end
