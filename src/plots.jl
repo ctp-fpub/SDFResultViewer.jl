@@ -1,3 +1,8 @@
+function cell_length(sim, direction::Symbol)
+    domain_length(sim[1], direction)/get_parameter(sim[1], Symbol("n"*"$direction"))
+end
+
+
 @doc """
     powertostring(base, number)
 
@@ -29,11 +34,12 @@ function powertostring(base, number)
     return s
 end
 
-# !!!!!! in these plots the simulation cells must be cubes (i.e. all sides equal)
-# the photon species can be selected
+@doc """
+Plot of photon number density along a given direction (direction::Symbol argument; default is :x).
+The distribution is normalized to the number density of the electrons at t=0.
+"""
 function photon_dens_integrated(sim; species = "photon", direction = :x, plot_title = "Photon number density integrated along x-axis")
     file = sim[1]
-    a = ustrip(u"μm",uconvert(u"μm^3",cell_volume(file))^(1/3))
     n₀ = file["number_density/electron"]
     
     file = sim[end]
@@ -48,9 +54,11 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
     dim = dir_to_idx(direction)
     nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=dim), dims=dim)
     n₀_int = dropdims(sum(n₀*cell_volume(file), dims=dim), dims=dim)
-    plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a, [1:1:size(nᵧ_int,2)]*a, transpose(nᵧ_int ./ n₀_int); kwargs...)
     
     if direction == :x
+        a1 = ustrip(u"μm",cell_length(sim, :y))
+        a2 = ustrip(u"μm",cell_length(sim, :z))
+        plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int ./ n₀_int); kwargs...) #damn heatmap is dumbly implemented
         Plots.plot!(plt,
               xlabel = "y (μm)", 
               xticks = (1:2:ustrip(u"μm", domain_length(sim[1], :y))),
@@ -60,6 +68,9 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
         )
         return plt
     elseif direction == :y
+        a1 = ustrip(u"μm",cell_length(sim, :x))
+        a2 = ustrip(u"μm",cell_length(sim, :z))
+        plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int ./ n₀_int); kwargs...)
         Plots.plot!(plt,
               xlabel = "x", 
               xticks = (1:2:ustrip(u"μm", domain_length(sim[1], :x))),
@@ -69,6 +80,9 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
         )
         return plt
     elseif direction == :z
+        a1 = ustrip(u"μm",cell_length(sim, :x))
+        a2 = ustrip(u"μm",cell_length(sim, :y))
+        plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int ./ n₀_int); kwargs...)
         Plots.plot!(plt,
               xlabel = "x (μm)", 
               xticks=(1:2:ustrip(u"μm", domain_length(sim[1], :x))),
@@ -80,12 +94,9 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
     end
 end
 
-# !!!!!! in these plots the simulation cells must be cubes (i.e. all sides equal)
-# the photon species can be selected
 # !!!!!! y and z directions have problems. to be investigated...
 function photon_en_dens_integrated(sim; species = "photon", direction = :x, endens_scale = 10^12 , plot_title = "Photon energy density integrated along x-axis")
     file = sim[end]
-    a = ustrip(u"μm",uconvert(u"μm^3",cell_volume(file))^(1/3))
     nᵧ, enᵧ= file["number_density/$species", "ekbar/$species"]
     enᵧ = ustrip.(u"MeV",enᵧ)
 
@@ -99,11 +110,12 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
     )
     dim = dir_to_idx(direction)
     n = uconvert(NoUnits, nᵧ*cell_volume(file).*enᵧ)
-    nᵧ_int = dropdims(sum(n, dims=dim), dims=dim) / a^2 / endens_scale
-    nt = transpose(nᵧ_int)
-    plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
 
     if direction == :x
+        a1 = ustrip(u"μm",cell_length(sim, :y))
+        a2 = ustrip(u"μm",cell_length(sim, :z))
+        nᵧ_int = dropdims(sum(n, dims=dim), dims=dim) / (a1*a2) / endens_scale
+        plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int); kwargs...)
         Plots.plot!(plt,
               xlabel = "y (μm)", 
               xticks = (1:2:ustrip(u"μm", domain_length(sim[1], :y))),
@@ -112,7 +124,10 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
         )
         return plt
     elseif direction == :y
-        plt = Plots.heatmap([1:1:size(nt,1)]*a, [1:1:size(nt,2)]*a, nt; kwargs...)
+        a1 = ustrip(u"μm",cell_length(sim, :x))
+        a2 = ustrip(u"μm",cell_length(sim, :z))
+        nᵧ_int = dropdims(sum(n, dims=dim), dims=dim) / (a1*a2) / endens_scale
+        plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int); kwargs...)
         Plots.plot!(plt,
               xlabel = "x (μm)", 
               xticks = (1:2:ustrip(u"μm", domain_length(sim[1], :x))),
@@ -121,6 +136,10 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
         )
         return plt
     elseif direction == :z
+        a1 = ustrip(u"μm",cell_length(sim, :x))
+        a2 = ustrip(u"μm",cell_length(sim, :y))
+        nᵧ_int = dropdims(sum(n, dims=dim), dims=dim) / (a1*a2) / endens_scale
+        plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int); kwargs...)
         Plots.plot!(plt,
               xlabel = "x (μm)", 
               xticks=(1:2:ustrip(u"μm", domain_length(sim[1], :x))),
