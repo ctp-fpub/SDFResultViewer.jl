@@ -21,7 +21,7 @@ function default3d_plot!(fig, f::ScalarField, cmap; kwargs...)
 end
 
 function default3d_plot!(fig, f::ScalarVariable, cmap; kwargs...)
-    size = get(kwargs, :size3d, 20)
+    size = get(kwargs, :size3d, 35)
 
     scattervariable(fig[1,1], f, size=size)
 end
@@ -41,34 +41,22 @@ function section_plot!(fig, f::ScalarField, slice_dir, idx_value; kwargs...)
     return section_ax, section_plt
 end
 
-function section_plot!(fig, f::ScalarVariable, slice_dir, idx_value; kwargs...)
+function section_plot!(ax, f::ScalarVariable, slice_dir, idx_value; kwargs...)
     dim = dir_to_idx(slice_dir)
     ϵ = get(kwargs, :ϵ, 0.2)
     grid = getdomain(f)
     sort!(f, dim)
 
     f_section = @lift slice(f, dim, $idx_value, ϵ)
-    # map(idx_value) do idx
-    #     @debug idx dim ϵ
-    #     s = slice(f, dim, idx, ϵ)
-    #     g = getdomain(s)
-    #     @debug typeof(s)
-    #     @debug "grid info: " minimum(g) maximum(g) length(g)
-    #     s
-    # end
     labels = string.(filter(i->i≠slice_dir, (:x,:y,:z)))
 
-    section_ax, section_plt = scattervariable(fig[1,2], f_section, size=2)
+    plt = scattervariable!(ax, f_section, size=2)
 
-    on(idx_value) do idx
-        autolimits!(section_ax)
-    end
+    ax.xlabel = labels[1]
+    ax.ylabel = labels[2]
+    ax.aspect = DataAspect()
 
-    section_ax.xlabel = labels[1]
-    section_ax.ylabel = labels[2]
-    section_ax.aspect = DataAspect()
-
-    return section_ax, section_plt
+    return plt
 end
 
 function add_legend!(fig, section_plt, ::ScalarField; kwargs...)
@@ -133,8 +121,9 @@ function section_widget(f, slice_dir=:x; kwargs...)
     # Slider
     sl, sl_label = slider(f_approx, slice_dir; kwargs...)
 
+    section_ax = Axis(fig[1,2])
     # Section through the field
-    section_ax, section_plt = section_plot!(fig, f_approx, slice_dir, sl.value; kwargs...)
+    section_plt = section_plot!(section_ax, f_approx, slice_dir, sl.value; kwargs...)
 
     add_legend!(fig, section_plt, f; kwargs...)
 
@@ -145,6 +134,7 @@ function section_widget(f, slice_dir=:x; kwargs...)
     ws[dim] = 0
 
     p = lift(sl.value) do idx
+        autolimits!(section_ax)
         update!(fig.scene)
 
         new_origin = grid[dim][idx]
