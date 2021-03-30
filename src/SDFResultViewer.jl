@@ -10,8 +10,10 @@ using PICDataStructures: dir_to_idx
 using PICAnalysisTools
 using Unitful
 using PhysicalConstants.CODATA2018: c_0, ε_0, m_e, e
+using Statistics, StatsBase
 # plots
 import Plots
+import PyPlot
 using UnitfulRecipes
 # widgets
 using WGLMakie
