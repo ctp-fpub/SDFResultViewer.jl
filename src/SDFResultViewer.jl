@@ -2,7 +2,7 @@ module SDFResultViewer
 
 export add_λ_units, unit_l, unit_t, unit_E, unit_B, unit_L, pₑ,
     average_linear_density_x, npart_plot,
-    scalar_field_widget
+    section_widget
 
 using SDFResults
 using PICDataStructures
