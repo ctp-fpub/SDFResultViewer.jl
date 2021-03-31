@@ -27,7 +27,7 @@ jobs:
       - run: |
           julia -e '
             using Pkg
-            Pkg.Registry.add(RegistrySpec(url="https://github.com/ctp-fpub/JuliaRegistry"))'
+            Pkg.Registry.add(RegistrySpec(url=raw"https://github.com/ctp-fpub/JuliaRegistry"))'
       - uses: actions/cache@v1
         env:
           cache-name: cache-artifacts
@@ -55,6 +55,7 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Pkg
+            Pkg.Registry.add(RegistrySpec(url=raw"https://github.com/ctp-fpub/JuliaRegistry"))
             Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()'
       - run: |
