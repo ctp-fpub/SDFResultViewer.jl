@@ -67,6 +67,10 @@ jobs:
         with:
           version: '1'
       - run: |
+          julia -e '
+            using Pkg
+            Pkg.Registry.add(RegistrySpec(url="https://github.com/ctp-fpub/JuliaRegistry"))'
+      - run: |
           julia --project=docs -e '
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
