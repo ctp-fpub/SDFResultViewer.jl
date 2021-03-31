@@ -27,7 +27,7 @@ jobs:
       - run: |
           julia -e '
             using Pkg
-            Pkg.Registry.add("https://github.com/ctp-fpub/JuliaRegistry")'
+            Pkg.Registry.add(RegistrySpec(url="https://github.com/ctp-fpub/JuliaRegistry"))'
       - uses: actions/cache@v1
         env:
           cache-name: cache-artifacts
