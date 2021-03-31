@@ -3,7 +3,11 @@ using Unitful
 using Test
 
 @testset "SDFResultViewer.jl" begin
-    dir = "/mnt/storage/epoch/Wang-Arefiev2020mod/12mtt_0.8w0_l0_MDO"
+    if isempty(ENV["CI"])
+        dir = "/mnt/storage/epoch/Wang-Arefiev2020mod/12mtt_0.8w0_l0_MDO"
+    else
+        dir = pwd()
+    end
     sim = read_simulation(dir)
 
     test_plot1 = SDFResultViewer.photon_energy_spectrum(sim; mark_max = true)
@@ -29,7 +33,7 @@ using Test
 
     @test SDFResultViewer.powertostring(2, 2^BigInt(1345)) == "2¹³⁴⁵"
     @test SDFResultViewer.powertostring(10, 1000) == "10³"
-    
+
     @test SDFResultViewer.cell_length(sim, :x) == 15u"μm"/450
-    
+
 end
