@@ -34,6 +34,35 @@ function powertostring(base, number)
     return s
 end
 
+# it would be good to add units (μm) to axes, but I have no idea how
+# there is some automatic padding (see how to reduce/remove it)
+function energy_density3D(file; species = "electron", levels=8, endens_scale = 10^10) # , plot_title = "Electron energy density" (maybe)
+    nᵧ, enᵧ= file["number_density/$species", "ekbar/$species"]
+    edens = uconvert(u"MeV*μm^-3", u"μm", nᵧ.*enᵧ)
+
+    fig = Figure(resolution=(650, 450))
+    edens_approx = approximate_field(edens ./ endens_scale)
+
+    cmap = RGBAf0.(to_colormap(:viridis, 50), 1.0)
+    cmap[1:2] .= RGBAf0(0,0,0,0)
+
+    ax, plt = contour(fig[1,1], edens_approx,
+        levels=levels, alpha = 0.3, transparency = true,
+        colormap=cmap
+    )
+    fix_text!(ax)
+
+    legend = Colorbar(fig,
+        label = "Energy density ($(powertostring(10, endens_scale)) MeV/μm³)",
+        width = 10, 
+        height = Relative(4/5),
+        vertical = true,
+        tellheight = true,
+        colormap = cgrad(:viridis, levels, categorical = true))
+    fig[1,2] = legend
+    return fig.scene
+end
+
 @doc """
 Plot of photon number density along a given direction (direction::Symbol argument; default is :x).
 The distribution is normalized to the number density of the electrons at t=0.
