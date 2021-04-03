@@ -386,11 +386,11 @@ function photon_solid_angle_emission(sim;  angle = pi, species = "photon", plot_
     return PyPlot.gcf()
 end
 
-function mean_Lx_plot(sim; species="electron")
-    Lx(file) = compute_Lx(file, species) |> unit_L
+function mean_Lx_plot(sim; species="electron", save=true)
+    Lx(file) = compute_L(:x, file, species) |> unit_L
     @time m_Lx = mean(Lx, sim)
-    @time m_Lx_plus = mean(Lx, sim, cond=lx->lx>0)
-    @time m_Lx_minus = mean(Lx, sim, cond=lx->lx<0)
+    @time m_Lx_plus = mean(Lx, sim, cond=lx->lx>zero(lx))
+    @time m_Lx_minus = mean(Lx, sim, cond=lx->lx<zero(lx))
 
     ts = get_time.(sim) .|> unit_t
 
@@ -402,6 +402,7 @@ function mean_Lx_plot(sim; species="electron")
     Plots.plot!(plt, ts, m_Lx_plus, label="Lx > 0")
     Plots.plot!(plt, ts, m_Lx_minus, label="Lx < 0")
 
+    save && Plots.savefig(plt, "mean_Lx.png")
     plt
 end
 
