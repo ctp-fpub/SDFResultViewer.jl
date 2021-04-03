@@ -58,8 +58,8 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
     n₀_int = dropdims(sum(n₀*cell_volume(file), dims=dim), dims=dim)
     
     if direction == :x
-        a1 = ustrip(u"μm",cell_length(sim, :y))
-        a2 = ustrip(u"μm",cell_length(sim, :z))
+        a1 = cell_length(sim, :y)
+        a2 = cell_length(sim, :z)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int ./ n₀_int); kwargs...) #damn heatmap is dumbly implemented
         Plots.plot!(plt,
               xlabel = "y (μm)", 
@@ -68,8 +68,8 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
         )
         return plt
     elseif direction == :y
-        a1 = ustrip(u"μm",cell_length(sim, :x))
-        a2 = ustrip(u"μm",cell_length(sim, :z))
+        a1 = cell_length(sim, :x)
+        a2 = cell_length(sim, :z)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int ./ n₀_int); kwargs...)
         Plots.plot!(plt,
               xlabel = "x (μm)", 
@@ -78,8 +78,8 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
         )
         return plt
     elseif direction == :z
-        a1 = ustrip(u"μm",cell_length(sim, :x))
-        a2 = ustrip(u"μm",cell_length(sim, :y))
+        a1 = cell_length(sim, :x)
+        a2 = cell_length(sim, :y)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int ./ n₀_int); kwargs...)
         Plots.plot!(plt,
               xlabel = "x (μm)", 
