@@ -406,6 +406,46 @@ function mean_Lx_plot(sim; species="electron", save=true)
     plt
 end
 
+function Lx_section_plot(file, slice_location;
+                         ϵ,
+                         species="electron",
+                         colormap=:RdYlBu_11,
+                         max_size=10^4,
+                         label="",
+                         save=false)
+
+    Lx = uconvert(unit_L, unit_l, compute_L(:x, file, species))
+    if all(iszero.(Lx))
+        @warn "Lx is 0"
+        return nothing
+    end
+    Lx_section = downsample(slice(Lx, :x, slice_location, ϵ), max_size)
+    if isempty(Lx_section)
+        @warn "Empty slice"
+        return nothing
+    end
+
+    cl = max(abs.(extrema(Lx))...)
+
+    bg = Plots.cgrad(colormap, categorical=true)[6]
+    t = sprint(show, get_time(file), context=:compact => true)
+
+    plt = Plots.plot(Lx_section;
+        xlabel = "y",
+        ylabel = "z",
+        clims = (-cl,cl),
+        cb_title = "Lx",
+        title = "Lx at x = $slice_location and t = $t",
+        seriescolor = colormap,
+        background_inside = bg,
+        framestyle = :box,
+        label)
+
+    save && Plots.savefig(plt, "Lx_x$(slice_location)_eps$(ϵ)_t$t.png")
+
+    return plt
+end
+
 function Lx_section_plots(sim, slice_location = 54.97unit_l; ϵ = 2e-3unit_l, species="electron")
     if !ispath(joinpath(dir, "Lx_section"))
         mkdir(joinpath(dir, "Lx_section"))
