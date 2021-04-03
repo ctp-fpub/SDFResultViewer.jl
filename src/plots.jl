@@ -94,7 +94,6 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
     end
 end
 
-# !!!!!! y and z directions have problems. to be investigated...
 function photon_en_dens_integrated(sim; species = "photon", direction = :x, endens_scale = 10^12 , plot_title = "Photon energy density integrated along x-axis")
     file = sim[end]
     nᵧ, enᵧ= file["number_density/$species", "ekbar/$species"]
@@ -150,12 +149,9 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
     end
 end
 
-# photon energy spectra sᵧ² dN/dsᵧ = f(sᵧ = log₁₀(E/keV))
-# the photon species can be selected
-# one can filter photons in cone. default angle is pi (180⁰), i.e. all photons going to the right
-# ! angle argument is given in radians
 @doc """
-Photon energy spectra sᵧ² dN/dsᵧ = f(sᵧ = log₁₀(E/keV))
+Photon energy spectra sᵧ² dN/dsᵧ = f(sᵧ = log₁₀(E/keV)). The photon species can be selected.
+One can filter photons in cone. default angle is π (180⁰), i.e. all photons going to the right
 """
 function photon_energy_spectrum(sim; label = "label", mark_max = false, angle = pi, species = "photon", plot_title = "Compton scattering spectrum")
     file = sim[end]
@@ -214,8 +210,7 @@ function photon_energy_spectrum(sim; label = "label", mark_max = false, angle = 
     return plt
 end
 
-# an alternative version of photon_energy_spectrum() 
-# that plots multiple spectra on the same plot
+# an alternative version of photon_energy_spectrum() that plots multiple spectra on the same plot
 function photon_energy_spectrum(sims, labels; legend_title = "labels", mark_max = false, angle = pi, species = "photon", plot_title = "Compton scattering spectrum")
     kwargs = (xlabel = "sᵧ = log₁₀(Eᵧ/keV)", 
             ylabel = "sᵧ² dN/dsᵧ", 
@@ -309,8 +304,7 @@ function energy_spectrum(sim; mass = m_e, species = "electron", plot_title = "El
     return plt
 end
 
-# an alternative version of energy_spectrum() 
-# that plots multiple spectra on the same plot
+# an alternative version of energy_spectrum() that plots multiple spectra on the same plot
 function energy_spectrum(sims, labels; legend_title = "labels", mass = m_e, species = "electron", plot_title = "Electron energy spectrum")
     kwargs = (xlabel = "s = log₁₀(E/MeV)", 
               ylabel = "s² dN/ds", 
@@ -345,10 +339,11 @@ function energy_spectrum(sims, labels; legend_title = "labels", mass = m_e, spec
     return plt
 end
 
-# Angular distribution of gamma energy emission (MeV/srad)
-# angles are given by the direction of the momentum (the reference axis is Ox)
-# one can filter photons in cone. default angle is pi (180⁰), i.e. all photons going to the right
-# ! angle argument is given in radians
+@doc """
+Angular distribution of gamma energy emission (MeV/srad). The angles are given by the direction of the momentum 
+(the reference axis is Ox). One can filter photons in cone. default angle is π (180⁰), i.e. all photons going 
+to the right.
+"""
 function photon_solid_angle_emission(sim;  angle = pi, species = "photon", plot_title = "Solid angle emission")
     file = sim[end]
 
