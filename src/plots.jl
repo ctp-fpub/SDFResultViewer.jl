@@ -452,44 +452,39 @@ function Lx_section_plot(file, slice_location;
     return plt
 end
 
-function Lx_section_plots(sim, slice_location = 54.97unit_l; ϵ = 2e-3unit_l, species="electron")
-    if !ispath(joinpath(dir, "Lx_section"))
-        mkdir(joinpath(dir, "Lx_section"))
-    end
-
-    for file in sim
-        Lx = compute_Lx(file, species)
-        Lx_section = sclice(Lx, :x, slice_location, ϵ)
-        if all(iszero.(Lx))
-            continue
-        end
-        cl = max(abs.(extrema(Lx))...)
-
-        bg = Plots.cgrad(:RdYlBu_11, categorical=true)[6]
-        t = sprint(show, get_time(file), context=:compact => true)
-
-        plt = Plots.scatter(y, z, zcolor=Lx,
-            xlabel = "y",
-            ylabel = "z",
-            clims = (-cl,cl),
-            cb_title = "Lx",
-            title = "Lx at x = $slice_location and t = $t",
-            markersize = 2.5, mswidth = 0,
-            color = :RdYlBu_11,
-            background_inside = bg,
-            framestyle = :box,
-            label = "l = $l",
-            aspect_ratio=1)
-
-        Plots.savefig(plt, joinpath(dir, "Lx_section", "Lx_x$(slice_location)_eps$(ϵ)_t$t.png"))
-    end
-end
-
 function npart_plot(sim; species="electron")
     ts = get_time.(sim) .|> unit_t
     npart = get_npart.(sim, (species,))
 
     Plots.plot(ts, npart, xlabel="t", ylabel="N")
+end
+
+function phase_space_summary_plot(sim, dir; species="electron", save=false)
+    r_mean, p_mean = phase_space_mean(sim, dir; species)
+    r_mean_plus, p_mean_plus = phase_space_mean(sim, dir; species, rcond=r->r>zero(r))
+    r_mean_minus, p_mean_minus = phase_space_mean(sim, dir; species, rcond=r->r<zero(r))
+
+    ts = uconvert.(unit_t, get_time.(sim))
+
+    plt1 = Plots.plot(ts, r_mean, xlabel="t", ylabel=dir, label="all")
+    Plots.plot!(plt1, ts, r_mean_plus, xlabel="t", ylabel=dir, label="r > 0")
+    Plots.plot!(plt1, ts, r_mean_minus, xlabel="t", ylabel=dir, label="r < 0")
+
+    plt2 = Plots.plot(ts, p_mean, xlabel="t", ylabel="p$dir", label="all")
+    Plots.plot!(plt2, ts, p_mean_plus, xlabel="t", ylabel="p$dir", label="r > 0")
+    Plots.plot!(plt2, ts, p_mean_minus, xlabel="t", ylabel="p$dir", label="r < 0")
+
+    plt3 = Plots.scatter(r_mean, p_mean, color=ts, xlabel=dir, ylabel="p$dir")
+
+    plt4 = Plots.scatter(r_mean, p_mean, xlabel=dir, ylabel="p$dir", label="all")
+    Plots.scatter!(r_mean_plus, p_mean_plus, xlabel=dir, ylabel="p$dir", label="r > 0")
+    Plots.scatter!(r_mean_minus, p_mean_minus, xlabel=dir, ylabel="p$dir", label="r < 0")
+
+    plt = Plots.plot(plt1, plt2, plt3, plt4, layout=4)
+
+    save && Plots.savefig(plt, joinpath(sim.dir, "phase_space_summary.png"))
+
+    return plt
 end
 
 # function center_of_mass_plot(dir, λ, d, species)

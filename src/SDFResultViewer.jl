@@ -3,6 +3,7 @@ module SDFResultViewer
 export add_λ_units, unit_l, unit_t, unit_E, unit_B, unit_L, pₑ,
     batch_plot,
     mean_Lx_plot, Lx_section_plot,
+    phase_space_summary_plot,
     average_linear_density_x, npart_plot,
     section_widget
 

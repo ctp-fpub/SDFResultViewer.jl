@@ -16,7 +16,6 @@ SDFResults = "3e51950c-1d7d-41c0-8bda-2201d9a6ffd5"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
-UnitfulRecipes = "42071c24-d89e-48dd-8a24-8a12d9b8861f"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
 [compat]
@@ -28,7 +27,6 @@ PyPlot = "2.9"
 SDFResults = "0.1"
 StatsBase = "0.33"
 Unitful = "1.5"
-UnitfulRecipes = "1.0"
 WGLMakie = "0.3"
 julia = "1.5, 1.6"
 
