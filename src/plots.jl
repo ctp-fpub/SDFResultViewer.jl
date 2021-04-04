@@ -1,8 +1,3 @@
-function cell_length(sim, direction::Symbol)
-    domain_length(sim[1], direction)/get_parameter(sim[1], Symbol("n"*"$direction"))
-end
-
-
 @doc """
     powertostring(base, number)
 
@@ -43,11 +38,11 @@ The distribution is normalized to the number density of the electrons at t=0.
 function photon_dens_integrated(sim; species = "photon", direction = :x, plot_title = "Photon number density integrated along x-axis")
     file = sim[1]
     n₀ = file["number_density/electron"]
-    
+
     file = sim[end]
     nᵧ = file["number_density/$species"]
 
-    kwargs = (color=:rainbow, 
+    kwargs = (color=:rainbow,
               colorbar_title="nᵧ/n₀",
               tick_direction = :out,
               minorticks = true,
@@ -56,34 +51,34 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
     dim = dir_to_idx(direction)
     nᵧ_int = dropdims(sum(nᵧ*cell_volume(file), dims=dim), dims=dim)
     n₀_int = dropdims(sum(n₀*cell_volume(file), dims=dim), dims=dim)
-    
+
     if direction == :x
-        a1 = cell_length(sim, :y)
-        a2 = cell_length(sim, :z)
+        a1 = cell_length(file, :y)
+        a2 = cell_length(file, :z)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int ./ n₀_int); kwargs...) #damn heatmap is dumbly implemented
         Plots.plot!(plt,
-              xlabel = "y (μm)", 
-              ylabel = "z (μm)", 
+              xlabel = "y (μm)",
+              ylabel = "z (μm)",
               size = (600,500)
         )
         return plt
     elseif direction == :y
-        a1 = cell_length(sim, :x)
-        a2 = cell_length(sim, :z)
+        a1 = cell_length(file, :x)
+        a2 = cell_length(file, :z)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int ./ n₀_int); kwargs...)
         Plots.plot!(plt,
-              xlabel = "x (μm)", 
-              ylabel = "z (μm)", 
+              xlabel = "x (μm)",
+              ylabel = "z (μm)",
               size = (665,500)
         )
         return plt
     elseif direction == :z
-        a1 = cell_length(sim, :x)
-        a2 = cell_length(sim, :y)
+        a1 = cell_length(file, :x)
+        a2 = cell_length(file, :y)
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int ./ n₀_int); kwargs...)
         Plots.plot!(plt,
-              xlabel = "x (μm)", 
-              ylabel = "y (μm)", 
+              xlabel = "x (μm)",
+              ylabel = "y (μm)",
               size = (665,500)
         )
         return plt
@@ -96,8 +91,8 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
     enᵧ = ustrip.(u"MeV",enᵧ)
 
     scale = powertostring(10, endens_scale)
-    kwargs = (color=:rainbow, 
-             colorbar_title="ϵᵧ ($scale MeV/μm²)", 
+    kwargs = (color=:rainbow,
+             colorbar_title="ϵᵧ ($scale MeV/μm²)",
              size = (665,600),
              tick_direction = :out,
              minorticks = true,
@@ -107,33 +102,33 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
     n = uconvert(NoUnits, nᵧ*cell_volume(file).*enᵧ)
 
     if direction == :x
-        a1 = ustrip(u"μm",cell_length(sim, :y))
-        a2 = ustrip(u"μm",cell_length(sim, :z))
+        a1 = ustrip(u"μm",cell_length(file, :y))
+        a2 = ustrip(u"μm",cell_length(file, :z))
         nᵧ_int = dropdims(sum(n, dims=dim), dims=dim) / (a1*a2) / endens_scale
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int); kwargs...)
         Plots.plot!(plt,
-              xlabel = "y (μm)", 
-              ylabel = "z (μm)", 
+              xlabel = "y (μm)",
+              ylabel = "z (μm)",
         )
         return plt
     elseif direction == :y
-        a1 = ustrip(u"μm",cell_length(sim, :x))
-        a2 = ustrip(u"μm",cell_length(sim, :z))
+        a1 = ustrip(u"μm",cell_length(file, :x))
+        a2 = ustrip(u"μm",cell_length(file, :z))
         nᵧ_int = dropdims(sum(n, dims=dim), dims=dim) / (a1*a2) / endens_scale
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int); kwargs...)
         Plots.plot!(plt,
-              xlabel = "x (μm)", 
-              ylabel = "z (μm)", 
+              xlabel = "x (μm)",
+              ylabel = "z (μm)",
         )
         return plt
     elseif direction == :z
-        a1 = ustrip(u"μm",cell_length(sim, :x))
-        a2 = ustrip(u"μm",cell_length(sim, :y))
+        a1 = ustrip(u"μm",cell_length(file, :x))
+        a2 = ustrip(u"μm",cell_length(file, :y))
         nᵧ_int = dropdims(sum(n, dims=dim), dims=dim) / (a1*a2) / endens_scale
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int); kwargs...)
         Plots.plot!(plt,
-              xlabel = "x (μm)", 
-              ylabel = "y (μm)", 
+              xlabel = "x (μm)",
+              ylabel = "y (μm)",
         )
         return plt
     end
@@ -168,30 +163,30 @@ function photon_energy_spectrum(sim; label = "label", mark_max = false, angle = 
     h = fit(Histogram, sᵧ; nbins = 200)
     s = midpoints(collect(h.edges[1]))
     N = h.weights
-    dNds = N./abs(s[1]-s[2]) 
+    dNds = N./abs(s[1]-s[2])
 
     idx = findall(x -> x > 0, s)
     s = s[idx]
     dNds = dNds[idx]
 
-    kwargs = (xlabel = "sᵧ = log₁₀(Eᵧ/keV)", 
-              ylabel = "sᵧ² dN/dsᵧ", 
+    kwargs = (xlabel = "sᵧ = log₁₀(Eᵧ/keV)",
+              ylabel = "sᵧ² dN/dsᵧ",
               label = label,
-              tickfontsize = 10, 
-              guidefontsize = 15, 
+              tickfontsize = 10,
+              guidefontsize = 15,
               title = plot_title,
-              legendfontsize = 15, 
+              legendfontsize = 15,
               legendtitlefont = 15,
               titlefont = 16
     )
-    
+
     plt = Plots.plot(s, dNds.*s.*s, linewidth = 4; kwargs...)
 
     if mark_max
         dNds = dNds.*s.*s
         p0 = findfirst(smax -> smax == maximum(dNds), dNds)
-        Plots.plot!(plt, [s[p0]], [dNds[p0]], seriestype = :scatter, 
-                                    markersize = 7, 
+        Plots.plot!(plt, [s[p0]], [dNds[p0]], seriestype = :scatter,
+                                    markersize = 7,
                                     markercolor = :black,
                                     label = false
         )
@@ -202,12 +197,12 @@ end
 
 # an alternative version of photon_energy_spectrum() that plots multiple spectra on the same plot
 function photon_energy_spectrum(sims, labels; legend_title = "labels", mark_max = false, angle = pi, species = "photon", plot_title = "Compton scattering spectrum")
-    kwargs = (xlabel = "sᵧ = log₁₀(Eᵧ/keV)", 
-            ylabel = "sᵧ² dN/dsᵧ", 
-            tickfontsize = 10, 
-            guidefontsize = 15, 
+    kwargs = (xlabel = "sᵧ = log₁₀(Eᵧ/keV)",
+            ylabel = "sᵧ² dN/dsᵧ",
+            tickfontsize = 10,
+            guidefontsize = 15,
             title = plot_title,
-            legendfontsize = 15, 
+            legendfontsize = 15,
             legendtitlefont = 15,
             titlefont = 16,
             legendtitle = legend_title
@@ -238,7 +233,7 @@ function photon_energy_spectrum(sims, labels; legend_title = "labels", mark_max 
         h = fit(Histogram, sᵧ; nbins = 200)
         s = midpoints(collect(h.edges[1]))
         N = h.weights
-        dNds = N./abs(s[1]-s[2]) 
+        dNds = N./abs(s[1]-s[2])
 
         idx = findall(x -> x > 0, s)
         s = s[idx]
@@ -248,8 +243,8 @@ function photon_energy_spectrum(sims, labels; legend_title = "labels", mark_max 
         if mark_max
             dNds = dNds.*s.*s
             p0 = findfirst(smax -> smax == maximum(dNds), dNds)
-            Plots.plot!(plt, [s[p0]], [dNds[p0]], seriestype = :scatter, 
-                                    markersize = 7, 
+            Plots.plot!(plt, [s[p0]], [dNds[p0]], seriestype = :scatter,
+                                    markersize = 7,
                                     markercolor = :black,
                                     label = false
             )
@@ -273,22 +268,22 @@ function energy_spectrum(sim; mass = m_e, species = "electron", plot_title = "El
     h = fit(Histogram, s₀; nbins = 200)
     s = midpoints(collect(h.edges[1]))
     N = h.weights
-    dNds = N./abs(s[1]-s[2]) 
+    dNds = N./abs(s[1]-s[2])
 
     idx = findall(x -> x > 0, s)
     s = s[idx]
     dNds = dNds[idx]
 
-    kwargs = (xlabel = "s = log₁₀(E/MeV)", 
-              ylabel = "s² dN/ds", 
-              tickfontsize = 10, 
-              guidefontsize = 15, 
+    kwargs = (xlabel = "s = log₁₀(E/MeV)",
+              ylabel = "s² dN/ds",
+              tickfontsize = 10,
+              guidefontsize = 15,
               title = plot_title,
-              legendfontsize = 15, 
+              legendfontsize = 15,
               legendtitlefont = 15,
               titlefont = 16
     )
-    
+
     plt = Plots.plot(s, dNds.*s.*s, linewidth = 4; kwargs...)
 
     return plt
@@ -296,12 +291,12 @@ end
 
 # an alternative version of energy_spectrum() that plots multiple spectra on the same plot
 function energy_spectrum(sims, labels; legend_title = "labels", mass = m_e, species = "electron", plot_title = "Electron energy spectrum")
-    kwargs = (xlabel = "s = log₁₀(E/MeV)", 
-              ylabel = "s² dN/ds", 
-              tickfontsize = 10, 
-              guidefontsize = 15, 
+    kwargs = (xlabel = "s = log₁₀(E/MeV)",
+              ylabel = "s² dN/ds",
+              tickfontsize = 10,
+              guidefontsize = 15,
               title = plot_title,
-              legendfontsize = 15, 
+              legendfontsize = 15,
               legendtitlefont = 15,
               titlefont = 16,
               legendtitle = legend_title
@@ -318,20 +313,20 @@ function energy_spectrum(sims, labels; legend_title = "labels", mass = m_e, spec
         h = fit(Histogram, s₀; nbins = 200)
         s = midpoints(collect(h.edges[1]))
         N = h.weights
-        dNds = N./abs(s[1]-s[2]) 
+        dNds = N./abs(s[1]-s[2])
 
         idx = findall(x -> x > 0, s)
         s = s[idx]
         dNds = dNds[idx]
-    
+
         plt = Plots.plot!(plt, s, dNds.*s.*s, linewidth = 4; label = labels[i])
     end
     return plt
 end
 
 @doc """
-Angular distribution of gamma energy emission (MeV/srad). The angles are given by the direction of the momentum 
-(the reference axis is Ox). One can filter photons in cone. default angle is π (180⁰), i.e. all photons going 
+Angular distribution of gamma energy emission (MeV/srad). The angles are given by the direction of the momentum
+(the reference axis is Ox). One can filter photons in cone. default angle is π (180⁰), i.e. all photons going
 to the right.
 """
 function photon_solid_angle_emission(sim;  angle = pi, species = "photon", plot_title = "Solid angle emission")
@@ -346,7 +341,7 @@ function photon_solid_angle_emission(sim;  angle = pi, species = "photon", plot_
     px = px[idx]
     py = py[idx]
     pz = pz[idx]
-    
+
     pₚₑᵣₚ = sqrt.(py.^2 + pz.^2)   #transversal momentum of each photon
     θ = atan.(pₚₑᵣₚ./px)           #emission angles for each photon
     ϕ = atan.(py, pz)
@@ -365,8 +360,8 @@ function photon_solid_angle_emission(sim;  angle = pi, species = "photon", plot_
     w = weights(ustrip.(u"MeV", Eᵧ))
 
     h = fit(Histogram, data, w, nbins = (360,90))
-    xedges = collect(h.edges[1]) 
-    yedges = rad2deg.(h.edges[2]) 
+    xedges = collect(h.edges[1])
+    yedges = rad2deg.(h.edges[2])
     H = h.weights
 
     ax = PyPlot.Axes3D(PyPlot.figure())
