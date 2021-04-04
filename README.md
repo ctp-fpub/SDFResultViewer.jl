@@ -3,6 +3,7 @@
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://ctp-fpub.github.io/SDFResultViewer.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://ctp-fpub.github.io/SDFResultViewer.jl/dev)
 [![Build Status](https://github.com/ctp-fpub/SDFResultViewer.jl/workflows/CI/badge.svg)](https://github.com/ctp-fpub/SDFResultViewer.jl/actions)
+[![Build Status](https://cloud.drone.io/api/badges/ctp-fpub/SDFResultViewer.jl/status.svg)](https://cloud.drone.io/ctp-fpub/SDFResultViewer.jl)
 [![Coverage](https://codecov.io/gh/ctp-fpub/SDFResultViewer.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/ctp-fpub/SDFResultViewer.jl)
 
 This package aims to provide visualization tools for [EPOCH](https://cfsa-pmw.warwick.ac.uk/mediawiki/index.php/EPOCH:FAQ) simulations.
