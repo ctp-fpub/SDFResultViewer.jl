@@ -8,7 +8,7 @@ Converts a number b^p into a string "bᵖ".
 julia> powertostring(2, 2^BigInt(1345))
 "2¹³⁴⁵"
 ```
-"""
+""" powertostring!
 function powertostring(base, number)
     power = Int(round(log(base,number))) #scale = 10^power
     d = Dict(0 => "⁰",
@@ -30,11 +30,11 @@ function powertostring(base, number)
 end
 
 @doc """
-    photon_dens_integrated(sim)
+    photon_dens_integrated(sim; species = "photon", direction = direction, plot_title = title)
 
 Plot of photon number density along a given direction (direction::Symbol argument; default is :x).
 The distribution is normalized to the number density of the electrons at t=0.
-"""
+""" photon_dens_integrated!
 function photon_dens_integrated(sim; species = "photon", direction = :x, plot_title = "Photon number density integrated along x-axis")
     file = sim[1]
     n₀ = file["number_density/electron"]
@@ -85,6 +85,12 @@ function photon_dens_integrated(sim; species = "photon", direction = :x, plot_ti
     end
 end
 
+@doc """
+    photon_en_dens_integrated(sim; species = "photon", direction = direction, endens_scale = scale , plot_title = title)
+
+Plot of photon energy density along a given direction (direction::Symbol argument; default is :x) in MeV/μm².
+One can choose to add a 10ˣ scale to the units with the endens_scale argument (pro tip: use BigInt for large powers).
+""" photon_en_dens_integrated!
 function photon_en_dens_integrated(sim; species = "photon", direction = :x, endens_scale = 10^12 , plot_title = "Photon energy density integrated along x-axis")
     file = sim[end]
     nᵧ, enᵧ= file["number_density/$species", "ekbar/$species"]
@@ -135,9 +141,11 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
 end
 
 @doc """
+    photon_energy_spectrum(sim; species = photon_species, plot_title = title, angle = pi)
+
 Photon energy spectra sᵧ² dN/dsᵧ = f(sᵧ = log₁₀(E/keV)). The photon species can be selected.
 One can filter photons in cone. default angle is π (180⁰), i.e. all photons going to the right
-"""
+""" photon_energy_spectrum!
 function photon_energy_spectrum(sim; label = "label", mark_max = false, angle = pi, species = "photon", plot_title = "Compton scattering spectrum")
     file = sim[end]
     px, py, pz = file["px/$species", "py/$species", "pz/$species"]
@@ -254,9 +262,11 @@ function photon_energy_spectrum(sims, labels; legend_title = "labels", mark_max 
 end
 
 @doc """
+    energy_spectrum(sim; mass = m_e, species = "electron", plot_title = title)
+
 Energy spectra s² dN/ds = f(s = log₁₀(E/MeV)) for particles with mass.
 The mass of the particle has to be added by hand with the mass argument (default is the electron mass).
-"""
+""" energy_spectrum!
 function energy_spectrum(sim; mass = m_e, species = "electron", plot_title = "Electron energy spectrum")
     file = sim[end]
     px, py, pz = file["px/$species", "py/$species", "pz/$species"]
@@ -325,10 +335,12 @@ function energy_spectrum(sims, labels; legend_title = "labels", mass = m_e, spec
 end
 
 @doc """
+    photon_solid_angle_emission(sim;  angle = pi, species = photon_species, plot_title = title)
+
 Angular distribution of gamma energy emission (MeV/srad). The angles are given by the direction of the momentum
 (the reference axis is Ox). One can filter photons in cone. default angle is π (180⁰), i.e. all photons going
 to the right.
-"""
+""" photon_solid_angle_emission!
 function photon_solid_angle_emission(sim;  angle = pi, species = "photon", plot_title = "Solid angle emission")
     file = sim[end]
 
