@@ -406,8 +406,14 @@ function mean_Lx_plot(sim; species="electron", save=true)
     plt
 end
 
+"""
+    Lx_section_plot(file, slice_location; ϵ, species="electron", colormap=:RdYlBu_11, max_size=10^4, label="", save=false)
+
+Plot a section through the Lx of the given `species`, along the direction given by `slice_location`.
+The slice has thicknes `ϵ` and the plot is downsampled to `max_size`.
+"""
 function Lx_section_plot(file, slice_location;
-                         ϵ,
+                         ϵ=2e-3unit_l,
                          species="electron",
                          colormap=:RdYlBu_11,
                          max_size=10^4,
