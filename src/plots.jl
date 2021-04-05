@@ -386,11 +386,11 @@ function photon_solid_angle_emission(sim;  angle = pi, species = "photon", plot_
     return PyPlot.gcf()
 end
 
-function mean_Lx_plot(sim; species="electron")
-    Lx(file) = compute_Lx(file, species) |> unit_L
+function mean_Lx_plot(sim; species="electron", save=true)
+    Lx(file) = compute_L(:x, file, species) |> unit_L
     @time m_Lx = mean(Lx, sim)
-    @time m_Lx_plus = mean(Lx, sim, cond=lx->lx>0)
-    @time m_Lx_minus = mean(Lx, sim, cond=lx->lx<0)
+    @time m_Lx_plus = mean(Lx, sim, cond=lx->lx>zero(lx))
+    @time m_Lx_minus = mean(Lx, sim, cond=lx->lx<zero(lx))
 
     ts = get_time.(sim) .|> unit_t
 
@@ -402,40 +402,54 @@ function mean_Lx_plot(sim; species="electron")
     Plots.plot!(plt, ts, m_Lx_plus, label="Lx > 0")
     Plots.plot!(plt, ts, m_Lx_minus, label="Lx < 0")
 
+    save && Plots.savefig(plt, "mean_Lx.png")
     plt
 end
 
-function Lx_section_plots(sim, slice_location = 54.97unit_l; ϵ = 2e-3unit_l, species="electron")
-    if !ispath(joinpath(dir, "Lx_section"))
-        mkdir(joinpath(dir, "Lx_section"))
+"""
+    Lx_section_plot(file, slice_location; ϵ, species="electron", colormap=:RdYlBu_11, max_size=10^4, label="", save=false)
+
+Plot a section through the Lx of the given `species`, along the direction given by `slice_location`.
+The slice has thicknes `ϵ` and the plot is downsampled to `max_size`.
+"""
+function Lx_section_plot(file, slice_location;
+                         ϵ=2e-3unit_l,
+                         species="electron",
+                         colormap=:RdYlBu_11,
+                         max_size=10^4,
+                         label="",
+                         save=false)
+
+    Lx = uconvert(unit_L, unit_l, compute_L(:x, file, species))
+    if all(iszero.(Lx))
+        @warn "Lx is 0"
+        return nothing
+    end
+    Lx_section = downsample(slice(Lx, :x, slice_location, ϵ), max_size)
+    if isempty(Lx_section)
+        @warn "Empty slice"
+        return nothing
     end
 
-    for file in sim
-        Lx = compute_Lx(file, species)
-        Lx_section = sclice(Lx, :x, slice_location, ϵ)
-        if all(iszero.(Lx))
-            continue
-        end
-        cl = max(abs.(extrema(Lx))...)
+    cl = max(abs.(extrema(Lx))...)
 
-        bg = Plots.cgrad(:RdYlBu_11, categorical=true)[6]
-        t = sprint(show, get_time(file), context=:compact => true)
+    bg = Plots.cgrad(colormap, categorical=true)[6]
+    t = sprint(show, get_time(file), context=:compact => true)
 
-        plt = Plots.scatter(y, z, zcolor=Lx,
-            xlabel = "y",
-            ylabel = "z",
-            clims = (-cl,cl),
-            cb_title = "Lx",
-            title = "Lx at x = $slice_location and t = $t",
-            markersize = 2.5, mswidth = 0,
-            color = :RdYlBu_11,
-            background_inside = bg,
-            framestyle = :box,
-            label = "l = $l",
-            aspect_ratio=1)
+    plt = Plots.plot(Lx_section;
+        xlabel = "y",
+        ylabel = "z",
+        clims = (-cl,cl),
+        cb_title = "Lx",
+        title = "Lx at x = $slice_location and t = $t",
+        seriescolor = colormap,
+        background_inside = bg,
+        framestyle = :box,
+        label)
 
-        Plots.savefig(plt, joinpath(dir, "Lx_section", "Lx_x$(slice_location)_eps$(ϵ)_t$t.png"))
-    end
+    save && Plots.savefig(plt, "Lx_x$(slice_location)_eps$(ϵ)_t$t.png")
+
+    return plt
 end
 
 function npart_plot(sim; species="electron")
@@ -443,6 +457,52 @@ function npart_plot(sim; species="electron")
     npart = get_npart.(sim, (species,))
 
     Plots.plot(ts, npart, xlabel="t", ylabel="N")
+end
+
+function phase_space_summary_plot(sim, dir; species="electron", save=false)
+    r_mean, p_mean,
+    r_mean_plus, p_mean_plus,
+    r_mean_minus, p_mean_minus = @withprogress name="Computing phase space mean" begin
+        r_mean, p_mean = phase_space_mean(sim, dir; species)
+        @logprogress 1/3
+        r_mean_plus, p_mean_plus = phase_space_mean(sim, dir; species, rcond=(i,r)->r>r_mean[i])
+        @logprogress 2/3
+        r_mean_minus, p_mean_minus = phase_space_mean(sim, dir; species, rcond=(i,r)->r<r_mean[i])
+        @logprogress 1
+
+        r_mean, p_mean, r_mean_plus, p_mean_plus, r_mean_minus, p_mean_minus
+    end
+
+    ts = ustrip.(unit_t, get_time.(sim))
+    r = uconvert.(unit_l, r_mean)
+    r_plus = uconvert.(unit_l, r_mean_plus)
+    r_minus = uconvert.(unit_l, r_mean_minus)
+    rm, rmp, rmm = mean(r), mean(r_plus), mean(r_minus)
+    p = uconvert.(pₑ, p_mean)
+    p_plus = uconvert.(pₑ, p_mean_plus)
+    p_minus = uconvert.(pₑ, p_mean_minus)
+    pm, pmp, pmm = mean(p), mean(p_plus), mean(p_minus)
+
+    r_label = "$dir - $(dir)ₘ"
+    plt1 = Plots.plot(ts, r .- rm, xlabel="t", ylabel=r_label, label="all")
+    Plots.plot!(plt1, ts, r_plus .- rmp, xlabel="t", ylabel=r_label, label="r > r̅")
+    Plots.plot!(plt1, ts, r_minus .- rmm, xlabel="t", ylabel=r_label, label="r < r̅")
+
+    plt2 = Plots.plot(ts, p, xlabel="t", ylabel="p$dir", label="all")
+    Plots.plot!(plt2, ts, p_plus, xlabel="t", ylabel="p$dir", label="r > r̅")
+    Plots.plot!(plt2, ts, p_minus, xlabel="t", ylabel="p$dir", label="r < r̅")
+
+    plt3 = Plots.scatter(r, p, zcolor=ts, xlabel=string(dir), ylabel="p$dir", legend=false)
+
+    plt4 = Plots.scatter(r .- rm, p, xlabel=r_label, ylabel="p$dir", label="all")
+    Plots.scatter!(r_plus .- rmp, p_plus, xlabel=r_label, ylabel="p$dir", label="r > r̅")
+    Plots.scatter!(r_minus .- rmm, p_minus, xlabel=r_label, ylabel="p$dir", label="r < r̅")
+
+    plt = Plots.plot(plt1, plt2, plt3, plt4, layout=4, size=(900,700))
+
+    save && Plots.savefig(plt, joinpath(sim.dir, "phase_space_summary.png"))
+
+    return plt
 end
 
 # function center_of_mass_plot(dir, λ, d, species)
