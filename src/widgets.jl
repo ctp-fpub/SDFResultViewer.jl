@@ -26,13 +26,13 @@ function default3d_plot!(fig, f::ScalarVariable, cmap; kwargs...)
     scattervariable(fig[1,1], f, size=size)
 end
 
-function section_plot!(fig, f::ScalarField, slice_dir, idx_value; kwargs...)
+function section_plot!(ax, f::ScalarField, slice_dir, idx_value; kwargs...)
     dim = dir_to_idx(slice_dir)
     levels = get(kwargs, :levels, 6)
     f_section = @lift(slice(f, dim, $idx_value))
     labels = string.(filter(i->i≠slice_dir, (:x,:y,:z)))
 
-    section_ax, section_plt = contour(fig[1,2], f_section, levels=levels)
+    section_ax, section_plt = contour(ax, f_section, levels=levels)
 
     section_ax.xlabel = labels[1]
     section_ax.ylabel = labels[2]
