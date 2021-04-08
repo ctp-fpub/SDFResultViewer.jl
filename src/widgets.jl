@@ -32,13 +32,13 @@ function section_plot!(ax, f::ScalarField, slice_dir, idx_value; kwargs...)
     f_section = @lift(slice(f, dim, $idx_value))
     labels = string.(filter(i->i≠slice_dir, (:x,:y,:z)))
 
-    section_ax, section_plt = contour(ax, f_section, levels=levels)
+    plt = contour!(ax, f_section, levels=levels)
 
-    section_ax.xlabel = labels[1]
-    section_ax.ylabel = labels[2]
-    section_ax.aspect = DataAspect()
+    ax.xlabel = labels[1]
+    ax.ylabel = labels[2]
+    ax.aspect = DataAspect()
 
-    return section_ax, section_plt
+    return plt
 end
 
 function section_plot!(ax, f::ScalarVariable, slice_dir, idx_value; kwargs...)

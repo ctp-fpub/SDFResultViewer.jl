@@ -18,7 +18,6 @@ using ProgressLogging
 # plots
 import Plots
 import PyPlot
-using UnitfulRecipes
 # widgets
 using WGLMakie
 using JSServe
