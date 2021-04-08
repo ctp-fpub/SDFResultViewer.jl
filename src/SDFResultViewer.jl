@@ -28,5 +28,6 @@ include("units.jl")
 include("batch.jl")
 include("plots.jl")
 include("widgets.jl")
+include("utils.jl")
 
 end
