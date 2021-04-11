@@ -5,12 +5,17 @@ export add_λ_units, unit_l, unit_t, unit_E, unit_B, unit_L, pₑ,
     mean_Lx_plot, Lx_section_plot,
     phase_space_summary_plot,
     average_linear_density_x, npart_plot,
-    section_widget
+    section_widget,
+    compare_E_slice_with_analytic
 
 using SDFResults
 using PICDataStructures
 using PICDataStructures: dir_to_idx
 using PICAnalysisTools
+using LaserTypes
+using StaticArrays
+using Rotations
+using RecursiveArrayTools: recursive_bottom_eltype
 using Unitful
 using Unitful: superscript
 using PhysicalConstants.CODATA2018: c_0, ε_0, m_e, e
