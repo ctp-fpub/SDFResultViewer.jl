@@ -18,3 +18,8 @@ function add_λ_units(λ)
     end
     eval(expr)
 end
+
+function add_λ_units(sim::EPOCHSimulation)
+    λ = get_parameter(sim, :laser, :lambda) |> u"nm"
+    add_λ_units(λ)
+end
