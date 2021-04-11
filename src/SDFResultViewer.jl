@@ -12,6 +12,7 @@ using PICDataStructures
 using PICDataStructures: dir_to_idx
 using PICAnalysisTools
 using Unitful
+using Unitful: superscript
 using PhysicalConstants.CODATA2018: c_0, ε_0, m_e, e
 using Statistics, StatsBase
 using ProgressLogging
@@ -26,7 +27,10 @@ using Markdown
 
 include("units.jl")
 include("batch.jl")
-include("plots.jl")
+include("plots/angular_momentum.jl")
+include("plots/fields.jl")
+include("plots/phase_space.jl")
+include("plots/qed.jl")
 include("widgets.jl")
 include("utils.jl")
 
