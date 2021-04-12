@@ -6,7 +6,7 @@ export add_λ_units, unit_l, unit_t, unit_E, unit_B, unit_L, pₑ,
     phase_space_summary_plot,
     average_linear_density_x, npart_plot,
     section_widget,
-    compare_E_slice_with_analytic
+    compare_E_slice_with_analytic, similar_E, similar_laser
 
 using SDFResults
 using PICDataStructures
@@ -36,6 +36,7 @@ include("plots/angular_momentum.jl")
 include("plots/fields.jl")
 include("plots/phase_space.jl")
 include("plots/qed.jl")
+include("plots/statistics.jl")
 include("widgets.jl")
 include("utils.jl")
 
