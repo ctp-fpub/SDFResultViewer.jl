@@ -42,22 +42,36 @@ function field_rotation(dir)
     end
 end
 
-function similar_E(E, t, laser;
-    component=1,
-    propagation_dir=:x,
-    x₀=zero(recursive_bottom_eltype(getdomain(E))),
-    y₀=zero(recursive_bottom_eltype(getdomain(E))),
-    z₀=zero(recursive_bottom_eltype(getdomain(E))))
+function similar_E(::Val{true}, laser, t, propagation_dir, component::Int, grid; x₀, y₀, z₀)
+    map(Iterators.product(grid...)) do (x,y,z)
+        r = SVector{3}(x-x₀, y-y₀, z-z₀)
+        R = field_rotation(propagation_dir)
+        analytic_E = R * (LaserTypes.E(R \ r, laser) * LaserTypes.g((R \ r)[3], t, laser))
+        analytic_E[component]
+    end
+end
 
-    E_approx = approximate_field(E)
-    grid = AxisGrid((getdomain(E_approx).*unit_l...,))
-
-    data = map(Iterators.product(grid...)) do (x,y,z)
+function similar_E(::Val{false}, laser, t, propagation_dir, component::Int, grid; x₀, y₀, z₀)
+    map(Iterators.product(grid...)) do (x,y,z)
         r = SVector{3}(x-x₀, y-y₀, z-z₀)
         R = field_rotation(propagation_dir)
         analytic_E = R * LaserTypes.E(R \ r, t, laser)
         analytic_E[component]
     end
+end
+
+function similar_E(E, t, laser;
+    component=1,
+    propagation_dir=:x,
+    complex=false,
+    x₀=zero(recursive_bottom_eltype(getdomain(E))),
+    y₀=zero(recursive_bottom_eltype(getdomain(E))),
+    z₀=zero(recursive_bottom_eltype(getdomain(E))))
+
+    E_approx = approximate_field(E)
+
+    grid = AxisGrid((getdomain(E_approx).*unit_l...,))
+    data = similar_E(Val(complex), laser, t, propagation_dir, component, grid; x₀,y₀,z₀)
 
     ScalarField(data, grid)
 end
