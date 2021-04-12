@@ -1,4 +1,19 @@
 @doc """
+    powertostring(base, number)
+Converts a number b^p into a string "bᵖ".
+#Example
+```julia-repl
+julia> powertostring(2, 2^BigInt(1345))
+"2¹³⁴⁵"
+```
+""" powertostring!
+function powertostring(base, number)
+    power = Int(round(log(base,number))) #scale = base^power
+    s = "$base"*superscript(power)
+    return s
+end
+
+@doc """
     photon_dens_integrated(sim; species = "photon", direction = direction, plot_title = title)
 
 Plot of photon number density along a given direction (direction::Symbol argument; default is :x).
@@ -65,7 +80,7 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
     nᵧ, enᵧ= file["number_density/$species", "ekbar/$species"]
     enᵧ = ustrip.(u"MeV",enᵧ)
 
-    scale = superscript(10, endens_scale)
+    scale = powertostring(10, endens_scale)
     kwargs = (color=:rainbow,
              colorbar_title="ϵᵧ ($scale MeV/μm²)",
              size = (665,600),
@@ -77,8 +92,8 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
     n = uconvert(NoUnits, nᵧ*cell_volume(file).*enᵧ)
 
     if direction == :x
-        a1 = ustrip(u"μm",cell_length(file, :y))
-        a2 = ustrip(u"μm",cell_length(file, :z))
+        a1 = ustrip(u"μm", cell_length(file, :y))
+        a2 = ustrip(u"μm", cell_length(file, :z))
         nᵧ_int = dropdims(sum(n, dims=dim), dims=dim) / (a1*a2) / endens_scale
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int); kwargs...)
         Plots.plot!(plt,
@@ -87,8 +102,8 @@ function photon_en_dens_integrated(sim; species = "photon", direction = :x, ende
         )
         return plt
     elseif direction == :y
-        a1 = ustrip(u"μm",cell_length(file, :x))
-        a2 = ustrip(u"μm",cell_length(file, :z))
+        a1 = ustrip(u"μm", cell_length(file, :x))
+        a2 = ustrip(u"μm", cell_length(file, :z))
         nᵧ_int = dropdims(sum(n, dims=dim), dims=dim) / (a1*a2) / endens_scale
         plt = Plots.heatmap([1:1:size(nᵧ_int,1)]*a1, [1:1:size(nᵧ_int,2)]*a2, transpose(nᵧ_int); kwargs...)
         Plots.plot!(plt,
