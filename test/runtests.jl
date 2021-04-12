@@ -1,5 +1,6 @@
 using SDFResultViewer
 using Unitful
+using SDFResults
 using Test
 
 @testset "SDFResultViewer.jl" begin
