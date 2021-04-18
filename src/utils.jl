@@ -7,7 +7,15 @@ function sdfcount(root_folder, pattern)
     Plots.plot(basename.(folders[idx]), n[idx], rotation=45, legend=false)
 end
 
-function similar_laser(laser::Type{LaguerreGaussLaser}, t_profile, file)
+function read_EM_fields(file)
+    Ex, Ey, Ez = uconvert.(unit_E, unit_l, file[:ex, :ey, :ez])
+    Bx, By, Bz = uconvert.(unit_B, unit_l, file[:bx, :by, :bz])
+
+    E = build_vector((Ex, Ey, Ez), (:x, :y, :z))
+    B = build_vector((Bx, By, Bz), (:x, :y, :z))
+
+    Ex, Ey, Ez, E, Bx, By, Bz, B
+end
     fx = get_parameter(file, :constant, :f_x)*u"m" |> unit_l
     λ = get_parameter(file, :laser, :lambda)
     m = get_parameter(file, :constant, :m)
