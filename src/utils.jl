@@ -17,6 +17,25 @@ function read_EM_fields(file)
     Ex, Ey, Ez, E, Bx, By, Bz, B
 end
 
+function dynamic_slice(f, slice_dir, slice_location)
+    if f isa Observable
+        obs_f = ustrip(f)
+    else
+        @debug "Converted field to Observable"
+        obs_f = Observable(ustrip(f))
+    end
+    if slice_location isa Observable
+        loc = @lift ustrip($slice_location)
+    else
+        @debug "Converted slice_location to Observable"
+        loc = Observable(ustrip(slice_location))
+    end
+
+    f_slice = @lift slice($obs_f, slice_dir, $loc)
+
+    return f_slice, loc
+end
+
 function analytic_laser(laser::Type{LaguerreGaussLaser}, t_profile, file)
     fx = get_parameter(file, :constant, :f_x)*u"m" |> unit_l
     λ = get_parameter(file, :laser, :lambda)
