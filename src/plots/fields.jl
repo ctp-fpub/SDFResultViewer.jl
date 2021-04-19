@@ -9,12 +9,14 @@ function E_slice_plot(E::ScalarField, dir, slice_location, t;
     else
         E_slice = E
     end
+get_unit_label(f) = " (" * unitname(f) * ")"
 
 function compare_slice_with_analytic(numeric_f, f, laser, profile, file;
+    fig = Figure(resolution = (800, 700)),
     component=1,
-    slice_location=0unit_l,
+    slice_location=0.0unit_l,
     slice_dir=:x,
-    label="",
+    fieldname="",
     f_unit)
 
     fx = get_parameter(file, :constant, :f_x)*u"m" |> unit_l
@@ -28,13 +30,17 @@ function compare_slice_with_analytic(numeric_f, f, laser, profile, file;
         propagation_dir=:x,
         x₀=fx) |> f_unit
 
-    fig = Figure(resolution = (800, 700))
+    analytic_slice, loc = dynamic_slice(analytic_f, slice_dir, slice_location)
+    numeric_slice, loc = dynamic_slice(numeric_f, slice_dir, slice_location)
 
-    units = " (" * string(unit(recursive_bottom_eltype(grid))) * ")"
+    units = get_unit_label(grid)
     xlabel, ylabel = filter(x->x≠string(slice_dir),
         ["x", "y", "z"] .* units)
-    # ts = @lift sprint(show, $t, context=:compact => true)
-    # loc = @lift sprint(show, $slice_location, context=:compact => true)
+    ts = sprint(show, t, context=:compact => true)
+    loc_str = @lift sprint(show,
+        $loc, context=:compact => true) * " " * unitname(slice_location)
+    title = @lift fieldname * " slice at t = " * ts * " and " *
+        string(slice_dir) * " = " * $loc_str
 
     ax1 = Axis(fig[1,1][1,1];
         xlabel, ylabel,
@@ -47,26 +53,25 @@ function compare_slice_with_analytic(numeric_f, f, laser, profile, file;
         aspect = DataAspect()
     )
 
-    analytic_slice, loc = to_observable(analytic_f; slice_dir, slice_location, issliced=false)
-    numeric_slice, loc = to_observable(numeric_f; slice_dir, slice_location, issliced=false)
-
     plt1 = fieldplot!(ax1, analytic_slice)
     plt2 = fieldplot!(ax2, numeric_slice)
 
     Colorbar(fig[1,1][2,1], plt1;
         width = Relative(3/4),
-        height = 10,
-        vertical = false,
+        height = 20,
+        vertical = false, flipaxis = false,
         tellheight = true,
-        label,
+        label = fieldname * get_unit_label(numeric_f),
     )
     Colorbar(fig[1,2][2,1], plt2;
         width = Relative(3/4),
-        height = 10,
-        vertical = false,
+        height = 20,
+        vertical = false, flipaxis = false,
         tellheight = true,
-        label,
+        label = fieldname * get_unit_label(numeric_f),
     )
+
+    Label(fig[0, :], title, textsize = 30, color = :black)
 
     return fig
 end
