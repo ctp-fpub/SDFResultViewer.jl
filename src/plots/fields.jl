@@ -1,14 +1,38 @@
-function E_slice_plot(E::ScalarField, dir, slice_location, t;
-    issliced=false,
-    save=false,
-    slice_dir=:x,
+function approx_plot(f;
+    fig = Figure(),
+    figurepos = fig[1,1],
+    xlabel = "",
+    ylabel = "",
+    title = "",
+    downsample_size = nothing,
+    cbar_label="",
     kwargs...)
 
-    if !issliced
-        E_slice = slice(E, slice_dir, slice_location)
+    ax = Axis(figurepos[1,1];
+        xlabel, ylabel,
+        title,
+        aspect = DataAspect()
+    )
+
+    if isnothing(downsample_size)
+        f_approx = downsample_approx(f)
     else
-        E_slice = E
+        f_approx = downsample_approx(f, downsample_size)
     end
+    @debug "Downsampled to $(size(f_approx))"
+
+    plt = fieldplot!(ax, f_approx; kwargs...)
+
+    Colorbar(figurepos[1,2], plt; width=20, label=cbar_label)
+
+    # TODO: Implement save
+    # if save
+    #     save && Plots.savefig(plt, "E$(dir_slice)_$loc.png")
+    # end
+
+    return fig
+end
+
 get_unit_label(f) = " (" * unitname(f) * ")"
 
 function compare_slice_with_analytic(numeric_f, f, laser, profile, file;

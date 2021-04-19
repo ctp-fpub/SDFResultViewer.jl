@@ -5,8 +5,8 @@ export add_λ_units, unit_l, unit_t, unit_E, unit_B, unit_L, pₑ,
     mean_Lx_plot, Lx_section_plot,
     phase_space_summary_plot,
     average_linear_density_x, npart_plot,
-    section_widget,
-    compare_E_slice_with_analytic, similar_E, similar_laser
+    section_widget, approx_plot,
+    apply_analytic, analytic_laser
 
 using SDFResults
 using PICDataStructures
