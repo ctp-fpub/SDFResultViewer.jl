@@ -111,6 +111,7 @@ function compare_E_slice_with_analytic(laser, profile, file, dir;
         slice_location,
         slice_dir,
         f_unit=unit_E,
+        fieldname="E$dir"
     )
 end
 
@@ -133,5 +134,86 @@ function compare_S_slice_with_analytic(laser, profile, file, dir;
     )
 end
 
-    return plt
+function poynting_summary(file, laser, profile, slice_location)
+    t = get_time(file) |> unit_t
+
+    # get data
+    fx = get_parameter(file, :constant, :f_x)*u"m" |> unit_l
+    Ex, Ey, Ez, E, Bx, By, Bz, B = read_EM_fields(file)
+
+    Ex_grid = getdomain(Ex)
+    Bx_grid = getdomain(Bx)
+
+    s = analytic_laser(laser, profile, file)
+
+    analytic_E = get_analytic_E(Ex_grid, t, s, x₀=fx)
+    analytic_B = get_analytic_B(Bx_grid, t, s, x₀=fx)
+    analytic_S = uconvert(unit_S, analytic_E × analytic_B / μ_0)
+
+    S = uconvert(unit_S, E × B / μ_0)
+
+    S_approx = downsample_approx(S, 15)
+    analytic_S_approx = downsample_approx(analytic_S, 15)
+    S_slice = downsample_approx(
+        slice(S, :x, slice_location),
+        50
+    )
+    analytic_S_slice = downsample_approx(
+        slice(analytic_S, :x, slice_location),
+        50
+    )
+
+    fig = Figure(resolution=(800,800))
+    # Layout
+    lscene1 = LScene(fig[1, 1], scenekw = (camera = cam3d!, raw = false))
+    lscene2 = LScene(fig[1, 2], scenekw = (camera = cam3d!, raw = false))
+    ax1 = Axis(fig[2,1][1,1],
+        aspect = DataAspect(),
+        title="Numeric",
+        xlabel="y ($unit_l)",
+        ylabel="z ($unit_l)"
+    )
+    ax2 = Axis(fig[2,2][1,1],
+        aspect = DataAspect(),
+        title="Analytic",
+        xlabel="y ($unit_l)",
+        ylabel="z ($unit_l)"
+    )
+    # Plots
+    # 3D
+    arrowsize_factor = 0.02
+    lengthscale_factor = 10
+    fieldplot!(lscene1, S_approx;
+        arrowsize_factor,
+        lengthscale_factor
+    )
+    fieldplot!(lscene2, analytic_S_approx;
+        arrowsize_factor,
+        lengthscale_factor
+    )
+    # 2D
+    arrowsize_factor = 0.15
+    lengthscale_factor = 6
+    plt1 = fieldplot!(ax1, S_slice;
+        arrowsize_factor,
+        lengthscale_factor
+    )
+    plt2 = fieldplot!(ax2, analytic_S_slice;
+        arrowsize_factor,
+        lengthscale_factor
+    )
+    # Colorbars
+    Colorbar(fig[2,1][2,1], plt1,
+        width = Relative(3/4), height = 15,
+        vertical = false, flipaxis = false,
+        label = "S ($unit_S)",
+    )
+    Colorbar(fig[2,2][2,1], plt2,
+        width = Relative(3/4), height = 15,
+        vertical = false, flipaxis = false,
+        label = "S ($unit_S)",
+    )
+
+    WGLMakie.trim!(fig.layout)
+    fig
 end
