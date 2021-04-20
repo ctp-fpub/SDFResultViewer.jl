@@ -14,7 +14,7 @@ function read_EM_fields(file)
     E = build_vector((Ex, Ey, Ez), (:x, :y, :z))
     B = build_vector((Bx, By, Bz), (:x, :y, :z))
 
-    Ex, Ey, Ez, E, Bx, By, Bz, B
+    E, B
 end
 
 function dynamic_slice(f, slice_dir, slice_location)
