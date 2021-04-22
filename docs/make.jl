@@ -13,7 +13,17 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "read.md",
+        "Plot recipes" => [
+            "Scalar Fields" => "fields.md",
+            "Angular momentum" => "angular_momentum.md",
+            "Phase Space" => "phase_space.md",
+            "QED Particles" => "qed.md",
+            "Statistics and Control" => "statistics.md"
+        ],
+        "widgets.jl"
     ],
+    modules = [SDFResultViewer]
 )
 
 deploydocs(;
