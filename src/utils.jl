@@ -7,7 +7,36 @@ function sdfcount(root_folder, pattern)
     Plots.plot(basename.(folders[idx]), n[idx], rotation=45, legend=false)
 end
 
-function similar_laser(laser::Type{LaguerreGaussLaser}, t_profile, file)
+function read_EM_fields(file)
+    Ex, Ey, Ez = uconvert.(unit_E, unit_l, file[:ex, :ey, :ez])
+    Bx, By, Bz = uconvert.(unit_B, unit_l, file[:bx, :by, :bz])
+
+    E = build_vector((Ex, Ey, Ez), (:x, :y, :z))
+    B = build_vector((Bx, By, Bz), (:x, :y, :z))
+
+    E, B
+end
+
+function dynamic_slice(f, slice_dir, slice_location)
+    if f isa Observable
+        obs_f = ustrip(f)
+    else
+        @debug "Converted field to Observable"
+        obs_f = Observable(ustrip(f))
+    end
+    if slice_location isa Observable
+        loc = @lift ustrip($slice_location)
+    else
+        @debug "Converted slice_location to Observable"
+        loc = Observable(ustrip(slice_location))
+    end
+
+    f_slice = @lift slice($obs_f, slice_dir, $loc)
+
+    return f_slice, loc
+end
+
+function analytic_laser(laser::Type{LaguerreGaussLaser}, t_profile, file)
     fx = get_parameter(file, :constant, :f_x)*u"m" |> unit_l
     λ = get_parameter(file, :laser, :lambda)
     m = get_parameter(file, :constant, :m)
@@ -42,62 +71,94 @@ function field_rotation(dir)
     end
 end
 
-function similar_E(::Val{true}, laser, t, propagation_dir, component::Int, grid; x₀, y₀, z₀)
-    map(Iterators.product(grid...)) do (x,y,z)
+function apply_analytic(::Val{true}, f, laser, t, propagation_dir, component, grid; x₀, y₀, z₀)
+    mapgrid(grid) do (x,y,z)
         r = SVector{3}(x-x₀, y-y₀, z-z₀)
         R = field_rotation(propagation_dir)
-        analytic_E = R * (LaserTypes.E(R \ r, laser) * LaserTypes.g((R \ r)[3], t, laser))
-        analytic_E[component]
+        analytic_E = R * (f(R \ r, laser) * LaserTypes.g((R \ r)[3], t, laser))
+
+        if component isa Number
+            analytic_E[component]
+        else
+            analytic_E
+        end
     end
 end
 
-function similar_E(::Val{false}, laser, t, propagation_dir, component::Int, grid; x₀, y₀, z₀)
-    map(Iterators.product(grid...)) do (x,y,z)
+function apply_analytic(::Val{false}, f, laser, t, propagation_dir, component, grid; x₀, y₀, z₀)
+    mapgrid(grid) do (x,y,z)
         r = SVector{3}(x-x₀, y-y₀, z-z₀)
         R = field_rotation(propagation_dir)
-        analytic_E = R * LaserTypes.E(R \ r, t, laser)
-        analytic_E[component]
+        analytic_E = R * f(R \ r, t, laser)
+
+        if component isa Number
+            analytic_E[component]
+        else
+            analytic_E
+        end
     end
 end
 
-function similar_E(E, t, laser;
+function apply_analytic(f, grid, t, laser;
     component=1,
     propagation_dir=:x,
     complex=false,
-    x₀=zero(recursive_bottom_eltype(getdomain(E))),
-    y₀=zero(recursive_bottom_eltype(getdomain(E))),
-    z₀=zero(recursive_bottom_eltype(getdomain(E))))
+    downsample_grid=true,
+    x₀=zero(recursive_bottom_eltype(grid)),
+    y₀=zero(recursive_bottom_eltype(grid)),
+    z₀=zero(recursive_bottom_eltype(grid)))
 
-    E_approx = approximate_field(E)
-
-    grid = AxisGrid((getdomain(E_approx).*unit_l...,))
-    data = similar_E(Val(complex), laser, t, propagation_dir, component, grid; x₀,y₀,z₀)
-
-    ScalarField(data, grid)
+    grid = downsample_grid ? downsample_approx(grid) : grid
+    data = apply_analytic(Val(complex),
+        f,
+        laser,
+        t,
+        propagation_dir,
+        component,
+        grid;
+        x₀,y₀,z₀)
+    if eltype(data) <: Number
+        ScalarField(data, grid)
+    else
+        # broken
+        @error "Use analytic_E or analytic_B"
+        VectorField(data, grid)
+    end
 end
 
-function compare_E_slice_with_analytic(laser, profile, file, dir;
-    slice_location=0unit_l,
-    slice_dir=:x)
+# Stopgap solution untill we can greate vector fields correctly with the above
+function get_analytic_E(grid, t, s;
+    downsample_grid=true,
+    x₀=zero(recursive_bottom_eltype(grid)),
+    y₀=zero(recursive_bottom_eltype(grid)),
+    z₀=zero(recursive_bottom_eltype(grid)))
 
-    fx = get_parameter(file, :constant, :f_x)*u"m" |> unit_l
-    t = get_time(file) |> unit_t
-    s = similar_laser(laser, profile, file)
+    grid = downsample_grid ? downsample_approx(grid) : grid
 
-    E = uconvert(unit_E, unit_l, file["e$dir"])
+    analytic_Ex = apply_analytic(LaserTypes.E, grid, t, s;
+        x₀,y₀,z₀, component=1) |> unit_E
+    analytic_Ey = apply_analytic(LaserTypes.E, grid, t, s;
+        x₀,y₀,z₀, component=2) |> unit_E
+    analytic_Ez = apply_analytic(LaserTypes.E, grid, t, s;
+        x₀,y₀,z₀, component=3) |> unit_E
 
-    analytic_E = similar_E(E, t, s,
-        component=dir_to_idx(dir),
-        propagation_dir=:x,
-        x₀=fx) |> unit_E
+    build_vector((analytic_Ex, analytic_Ey, analytic_Ez), (:x,:y,:z))
+end
 
-    plt1 = E_slice_plot(analytic_E, dir, slice_location, t;
-        legend_title = "Analytic",
-        slice_dir,
-        issliced=false)
-    plt2 = E_slice_plot(E, dir, slice_location, t;
-        legend_title = "Numeric",
-        slice_dir,
-        issliced=false)
-    Plots.plot(plt1, plt2, size=(400,600), layout=(2,1))
+function get_analytic_B(grid, t, s;
+    downsample_grid=true,
+    x₀=zero(recursive_bottom_eltype(grid)),
+    y₀=zero(recursive_bottom_eltype(grid)),
+    z₀=zero(recursive_bottom_eltype(grid)))
+
+    grid = downsample_grid ? downsample_approx(grid) : grid
+
+    analytic_Bx = apply_analytic(LaserTypes.B, grid, t, s;
+        x₀,y₀,z₀, component=1) |> unit_B
+    analytic_By = apply_analytic(LaserTypes.B, grid, t, s;
+        x₀,y₀,z₀, component=2) |> unit_B
+    analytic_Bz = apply_analytic(LaserTypes.B, grid, t, s;
+        x₀,y₀,z₀, component=3) |> unit_B
+
+    build_vector((analytic_Bx, analytic_By, analytic_Bz), (:x,:y,:z))
 end
