@@ -1,11 +1,23 @@
 name: CI
+
+# Controls when the action will run.
 on:
-  - push
-  - pull_request
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
+    env:
+      PYTHON: ""
     strategy:
       fail-fast: false
       matrix:
@@ -24,6 +36,10 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+      - run: |
+            using Pkg
+            Pkg.Registry.add(RegistrySpec(url="https://github.com/ctp-fpub/JuliaRegistry"))
+        shell: julia --color=yes --project=. {0}
       - uses: actions/cache@v1
         env:
           cache-name: cache-artifacts
@@ -43,11 +59,17 @@ jobs:
   docs:
     name: Documentation
     runs-on: ubuntu-latest
+    env:
+      PYTHON: ""
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
+      - run: |
+          julia -e '
+            using Pkg
+            Pkg.Registry.add(RegistrySpec(url="https://github.com/ctp-fpub/JuliaRegistry"))'
       - run: |
           julia --project=docs -e '
             using Pkg
